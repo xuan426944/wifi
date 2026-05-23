@@ -13,7 +13,12 @@ export interface AdViewRecord {
   viewNo: string;
   openid: string;
   storeId: number;
+  status: "started" | "completed" | "closed_early";
   isEffective: boolean;
+  invalidReason?: string;
+  rewardToken?: string;
+  startedAt: string;
+  finishedAt?: string;
 }
 
 export interface RewardTokenRecord {
@@ -25,6 +30,24 @@ export interface RewardTokenRecord {
   status: "active" | "used";
 }
 
+export interface ScanLogRecord {
+  id: number;
+  openid: string;
+  storeId: number;
+  scene?: string;
+  createdAt: string;
+}
+
+export interface WifiConnectLogRecord {
+  id: number;
+  openid: string;
+  storeId: number;
+  rewardToken?: string;
+  status: "success" | "failed" | "manual" | "missing_wifi";
+  failReason?: string;
+  createdAt: string;
+}
+
 @Injectable()
 export class InMemoryStore {
   private userSeq = 5;
@@ -32,6 +55,8 @@ export class InMemoryStore {
   private storeSeq = 1;
   private wifiSeq = 1;
   private qrcodeSeq = 1;
+  private scanLogSeq = 0;
+  private wifiConnectLogSeq = 0;
 
   readonly users: UserEntity[] = [
     { id: 1, openid: "mock_customer", userType: "customer", status: "active" },
@@ -209,6 +234,8 @@ export class InMemoryStore {
 
   readonly adViews = new Map<string, AdViewRecord>();
   readonly rewardTokens = new Map<string, RewardTokenRecord>();
+  readonly scanLogs: ScanLogRecord[] = [];
+  readonly wifiConnectLogs: WifiConnectLogRecord[] = [];
 
   findMerchantOwner(openid: string) {
     const owner = this.merchantOwners.find((item) => item.openid === openid && item.status === "active");
@@ -242,5 +269,15 @@ export class InMemoryStore {
   nextQrcodeId() {
     this.qrcodeSeq += 1;
     return this.qrcodeSeq;
+  }
+
+  nextScanLogId() {
+    this.scanLogSeq += 1;
+    return this.scanLogSeq;
+  }
+
+  nextWifiConnectLogId() {
+    this.wifiConnectLogSeq += 1;
+    return this.wifiConnectLogSeq;
   }
 }

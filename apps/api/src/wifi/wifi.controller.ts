@@ -18,8 +18,8 @@ export class WifiController {
   }
 
   @Post("connect-info")
-  async connectInfo(@Body() body: { rewardToken: string }) {
-    return ok(await this.wifiService.connectInfo(body.rewardToken));
+  async connectInfo(@Req() request: any, @Body() body: { rewardToken: string }) {
+    return ok(await this.wifiService.connectInfo(request.principal.openid, body.rewardToken));
   }
 
   @Post("connect-result")

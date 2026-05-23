@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Inject, Post, Query, Req } from "@nestjs/common";
 import { ok } from "../common/api-response";
 import { ApiException, ERROR_CODES } from "../common/errors";
+import { InMemoryStore } from "../database/in-memory-store";
 import {
   QRCODE_REPOSITORY,
   QrcodeRepository,
@@ -16,6 +17,7 @@ export class StoreController {
     @Inject(STORE_REPOSITORY) private readonly stores: StoreRepository,
     @Inject(WIFI_CONFIG_REPOSITORY) private readonly wifiConfigs: WifiConfigRepository,
     @Inject(QRCODE_REPOSITORY) private readonly qrcodes: QrcodeRepository,
+    @Inject(InMemoryStore) private readonly memoryStore: InMemoryStore,
   ) {}
 
   @Get("store/landing")
@@ -41,8 +43,27 @@ export class StoreController {
 
   @Post("scan/report")
   report(@Req() request: any, @Body() body: { storeId: number; scene?: string }) {
+    const store = this.stores.findById(Number(body.storeId));
+    if (!store || store.status !== "active") {
+      throw new ApiException(ERROR_CODES.NOT_FOUND, "门店不存在或不可用", 404);
+    }
+    if (body.scene) {
+      const sceneStore = this.resolveStore(body.scene);
+      if (sceneStore.id !== store.id) {
+        throw new ApiException(ERROR_CODES.PARAM_INVALID, "scene 与门店不匹配", 400);
+      }
+    }
+    const scanLog = {
+      id: this.memoryStore.nextScanLogId(),
+      openid: request.principal.openid,
+      storeId: store.id,
+      scene: body.scene,
+      createdAt: new Date().toISOString(),
+    };
+    this.memoryStore.scanLogs.push(scanLog);
     return ok({
       accepted: true,
+      scanLogId: scanLog.id,
       openid: request.principal.openid,
       storeId: body.storeId,
       scene: body.scene,

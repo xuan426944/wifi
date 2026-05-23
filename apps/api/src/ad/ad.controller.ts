@@ -12,7 +12,7 @@ export class AdController {
   }
 
   @Post("finish")
-  async finish(@Body() body: { viewNo: string; isEnded: boolean; closeReason?: string }) {
-    return ok(await this.adService.finish(body.viewNo, body.isEnded));
+  async finish(@Req() request: any, @Body() body: { viewNo: string; isEnded: boolean; closeReason?: string }) {
+    return ok(await this.adService.finish(request.principal.openid, body.viewNo, body.isEnded));
   }
 }

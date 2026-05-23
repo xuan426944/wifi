@@ -2,6 +2,7 @@ import { Body, Controller, Get, Inject, Param, Post, Put, Query, Req, UseGuards 
 import { emptyPage, ok } from "../common/api-response";
 import { ApiException, ERROR_CODES } from "../common/errors";
 import { CreateMerchantDto, CreateStoreDto, SaveWifiConfigDto, UpdateShareRateDto, UpdateStoreDto } from "../database/dtos";
+import { InMemoryStore } from "../database/in-memory-store";
 import {
   MERCHANT_REPOSITORY,
   MerchantRepository,
@@ -32,16 +33,18 @@ export class AdminController {
     @Inject(QRCODE_REPOSITORY) private readonly qrcodesRepo: QrcodeRepository,
     @Inject(WALLET_REPOSITORY) private readonly walletsRepo: WalletRepository,
     @Inject(OperationLogService) private readonly operationLogs: OperationLogService,
+    @Inject(InMemoryStore) private readonly memoryStore: InMemoryStore,
   ) {}
 
   @Get("dashboard")
   @RequirePermission("admin.dashboard.read")
   dashboard() {
+    const adViews = [...this.memoryStore.adViews.values()];
     return ok({
-      todayScanUsers: 0,
-      todayAdViews: 0,
-      todayAdCompletes: 0,
-      todayConnectSuccess: 0,
+      todayScanUsers: new Set(this.memoryStore.scanLogs.map((log) => log.openid)).size,
+      todayAdViews: adViews.length,
+      todayAdCompletes: adViews.filter((view) => view.isEffective).length,
+      todayConnectSuccess: this.memoryStore.wifiConnectLogs.filter((log) => log.status === "success").length,
       todayEstimatedRevenueCent: 0,
       todayMerchantShareCent: 0,
       todayPlatformRevenueCent: 0,

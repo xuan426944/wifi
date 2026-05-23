@@ -168,7 +168,7 @@ paths:
                 viewNo: { type: string }
                 isEnded: { type: boolean }
                 closeReason: { type: string }
-      responses: { '200': { description: 返回 isEffective、rewardToken 可选 } }
+      responses: { '200': { description: 返回 isEffective、rewardToken、expiresAt；未完整观看不发放 token } }
   /wifi/reward-token:
     post:
       summary: 获取 WiFi 授权 token
@@ -208,7 +208,7 @@ paths:
                 rewardToken: { type: string }
                 status: { type: string, enum: [success,failed,manual,missing_wifi] }
                 failReason: { type: string }
-      responses: { '200': { description: ok } }
+      responses: { '200': { description: 返回 accepted、connectLogId、manualFallback } }
   /merchant/dashboard:
     get:
       summary: 商户看板，仅授权商户可访问
