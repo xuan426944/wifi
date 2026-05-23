@@ -1,6 +1,15 @@
-export type AdminRole = "super_admin" | "operator" | "finance" | "risk" | "customer_service" | "readonly_audit";
+import { AdminRole } from "./types";
 
-export const ROLE_PERMISSIONS: Record<AdminRole, string[]> = {
+export const roleLabels: Record<AdminRole, string> = {
+  super_admin: "超级管理员",
+  operator: "运营",
+  finance: "财务",
+  risk: "风控",
+  customer_service: "客服",
+  readonly_audit: "只读审计",
+};
+
+export const rolePermissions: Record<AdminRole, string[]> = {
   super_admin: ["*"],
   operator: [
     "admin.dashboard.read",
@@ -12,11 +21,10 @@ export const ROLE_PERMISSIONS: Record<AdminRole, string[]> = {
     "ads.write",
     "ranking.read",
     "ranking.write",
+    "operation_log.read",
   ],
   finance: [
     "admin.dashboard.read",
-    "merchant.share_rate.write",
-    "store.share_rate.write",
     "revenue.read",
     "revenue.confirm",
     "reconciliation.read",
@@ -30,13 +38,13 @@ export const ROLE_PERMISSIONS: Record<AdminRole, string[]> = {
   risk: [
     "admin.dashboard.read",
     "merchant.disable",
-    "wallet.read",
-    "withdraw.read",
-    "withdraw.review",
     "risk.read",
     "risk.handle",
     "ranking.read",
     "ranking.write",
+    "wallet.read",
+    "withdraw.read",
+    "withdraw.review",
     "operation_log.read",
   ],
   customer_service: ["admin.dashboard.read", "operation_log.read"],
@@ -46,7 +54,6 @@ export const ROLE_PERMISSIONS: Record<AdminRole, string[]> = {
     "revenue.read",
     "wallet.read",
     "withdraw.read",
-    "reconciliation.read",
     "risk.read",
     "ranking.read",
     "system_config.read",
@@ -55,23 +62,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, string[]> = {
   ],
 };
 
-export const hasPermission = (role: AdminRole | undefined, permission: string) => {
-  if (!role) {
-    return false;
-  }
-  const permissions = ROLE_PERMISSIONS[role] ?? [];
+export const hasPermission = (role: AdminRole, permission: string) => {
+  const permissions = rolePermissions[role] ?? [];
   return permissions.includes("*") || permissions.includes(permission);
-};
-
-export const isAdminRole = (role: string): role is AdminRole =>
-  ["super_admin", "operator", "finance", "risk", "customer_service", "readonly_audit"].includes(role);
-
-export const resolveMockAdminRole = (username?: string): AdminRole => {
-  if (!username || username === "admin") {
-    return "super_admin";
-  }
-  if (isAdminRole(username)) {
-    return username;
-  }
-  return "readonly_audit";
 };

@@ -4,11 +4,391 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>门店扫码WiFi广告平台后台</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f6f8fb;
+        --surface: #ffffff;
+        --line: #dbe3ee;
+        --text: #1f2937;
+        --muted: #667085;
+        --blue: #2563eb;
+        --green: #059669;
+        --amber: #b45309;
+        --red: #dc2626;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+        letter-spacing: 0;
+      }
+      .admin-shell {
+        min-height: 100vh;
+        display: grid;
+        grid-template-columns: 248px minmax(0, 1fr);
+      }
+      aside {
+        background: #111827;
+        color: #e5e7eb;
+        padding: 18px 14px;
+      }
+      .brand {
+        font-size: 17px;
+        font-weight: 700;
+        line-height: 1.35;
+        margin: 0 0 18px;
+      }
+      .nav-group {
+        margin: 18px 0 8px;
+        color: #93c5fd;
+        font-size: 12px;
+      }
+      .nav-link {
+        display: block;
+        padding: 9px 10px;
+        border-radius: 6px;
+        color: #d1d5db;
+        text-decoration: none;
+        font-size: 14px;
+      }
+      .nav-link.active,
+      .nav-link:hover {
+        background: #1f2937;
+        color: #ffffff;
+      }
+      header {
+        min-height: 64px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 24px;
+      }
+      main {
+        padding: 22px 24px 36px;
+      }
+      h1,
+      h2 {
+        margin: 0;
+        font-weight: 700;
+      }
+      h1 {
+        font-size: 22px;
+      }
+      h2 {
+        font-size: 16px;
+      }
+      .role {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(160px, 1fr));
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+      .metric,
+      .panel {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+      .metric {
+        padding: 14px;
+      }
+      .metric span {
+        display: block;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .metric strong {
+        display: block;
+        margin-top: 8px;
+        font-size: 24px;
+      }
+      .panel {
+        margin-top: 14px;
+        overflow: hidden;
+      }
+      .panel-head {
+        min-height: 54px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        border-bottom: 1px solid var(--line);
+        padding: 12px 14px;
+      }
+      .search-row {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(120px, 1fr));
+        gap: 10px;
+        padding: 14px;
+        border-bottom: 1px solid var(--line);
+      }
+      .control {
+        min-height: 36px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #f9fafb;
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+        padding: 0 10px;
+        font-size: 13px;
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      button {
+        min-height: 34px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--text);
+        padding: 0 12px;
+        font: inherit;
+      }
+      button.primary {
+        background: var(--blue);
+        border-color: var(--blue);
+        color: #ffffff;
+      }
+      button.risk {
+        border-color: #fecaca;
+        color: var(--red);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      th,
+      td {
+        border-bottom: 1px solid var(--line);
+        padding: 11px 12px;
+        text-align: left;
+        white-space: nowrap;
+      }
+      th {
+        background: #f9fafb;
+        color: var(--muted);
+        font-weight: 600;
+      }
+      .empty {
+        padding: 26px 12px;
+        text-align: center;
+        color: var(--muted);
+      }
+      .notice {
+        margin-top: 12px;
+        color: var(--amber);
+        font-size: 13px;
+      }
+      .status-row {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(160px, 1fr));
+        gap: 12px;
+      }
+      .status {
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-left: 4px solid var(--green);
+        border-radius: 8px;
+        background: var(--surface);
+      }
+      .status small {
+        color: var(--muted);
+      }
+      @media (max-width: 900px) {
+        .admin-shell {
+          grid-template-columns: 1fr;
+        }
+        aside {
+          display: none;
+        }
+        .metrics,
+        .search-row,
+        .status-row {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
   </head>
   <body>
-    <main id="app" data-phase="01">
-      <h1>数据总览</h1>
-      <p>暂无运营数据</p>
-    </main>
+    <div id="app" class="admin-shell" data-phase="09">
+      <aside>
+        <p class="brand">门店扫码WiFi广告平台后台</p>
+        <div class="nav-group">运营</div>
+        <a class="nav-link active" href="#dashboard">数据总览</a>
+        <a class="nav-link" href="#ranking">排行榜配置</a>
+        <div class="nav-group">商户</div>
+        <a class="nav-link" href="#applications">商户申请审核</a>
+        <a class="nav-link" href="#merchants">商户管理</a>
+        <a class="nav-link" href="#stores">门店管理</a>
+        <a class="nav-link" href="#wifi">WiFi 管理</a>
+        <a class="nav-link" href="#qrcodes">二维码管理</a>
+        <div class="nav-group">广告</div>
+        <a class="nav-link" href="#ads">广告管理</a>
+        <a class="nav-link" href="#campaigns">广告投放</a>
+        <div class="nav-group">财务</div>
+        <a class="nav-link" href="#revenue">收益管理</a>
+        <a class="nav-link" href="#wallets">钱包管理</a>
+        <a class="nav-link" href="#withdraws">提现管理</a>
+        <a class="nav-link" href="#reconciliation">财务对账</a>
+        <div class="nav-group">风控与系统</div>
+        <a class="nav-link" href="#risk">风控中心</a>
+        <a class="nav-link" href="#system">系统配置</a>
+        <a class="nav-link" href="#integrations">第三方配置状态</a>
+        <a class="nav-link" href="#permissions">权限管理</a>
+        <a class="nav-link" href="#logs">操作日志</a>
+      </aside>
+      <section>
+        <header>
+          <h1>数据总览</h1>
+          <div class="role">当前角色：超级管理员</div>
+        </header>
+        <main>
+          <section class="metrics" aria-label="核心指标">
+            <div class="metric"><span>今日扫码人数</span><strong>0</strong></div>
+            <div class="metric"><span>今日广告完成</span><strong>0</strong></div>
+            <div class="metric"><span>今日连接成功</span><strong>0</strong></div>
+            <div class="metric"><span>待审核提现</span><strong>0</strong></div>
+          </section>
+
+          <section class="panel" id="merchants">
+            <div class="panel-head">
+              <h2>商户管理</h2>
+              <div class="actions">
+                <button class="primary">新增</button>
+                <button>查询</button>
+                <button>重置</button>
+                <button>导出</button>
+              </div>
+            </div>
+            <div class="search-row">
+              <div class="control">商户名称/编号/手机号</div>
+              <div class="control">状态</div>
+              <div class="control">风控状态</div>
+              <div class="control">创建时间</div>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>商户编号</th>
+                  <th>商户名称</th>
+                  <th>老板姓名</th>
+                  <th>手机号</th>
+                  <th>分成比例</th>
+                  <th>状态</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="7" class="empty">暂无商户</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section class="panel" id="wifi">
+            <div class="panel-head">
+              <h2>WiFi 管理</h2>
+              <div class="actions">
+                <button class="primary">新增</button>
+                <button class="risk">复制密码</button>
+                <button class="risk">禁用</button>
+              </div>
+            </div>
+            <div class="search-row">
+              <div class="control">门店</div>
+              <div class="control">商户</div>
+              <div class="control">SSID</div>
+              <div class="control">连接模式</div>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>门店</th>
+                  <th>商户</th>
+                  <th>SSID</th>
+                  <th>密码脱敏</th>
+                  <th>手动兜底</th>
+                  <th>更新时间</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="6" class="empty">未配置</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section class="panel" id="finance">
+            <div class="panel-head">
+              <h2>收益 / 钱包 / 提现</h2>
+              <div class="actions">
+                <button>确认结算</button>
+                <button class="risk">人工调账</button>
+                <button class="risk">审核提现</button>
+                <button>发起对账</button>
+              </div>
+            </div>
+            <div class="search-row">
+              <div class="control">商户</div>
+              <div class="control">门店</div>
+              <div class="control">状态</div>
+              <div class="control">日期</div>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>收益编号</th>
+                  <th>商户收益</th>
+                  <th>可提现</th>
+                  <th>提现冻结</th>
+                  <th>提现状态</th>
+                  <th>流水</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="6" class="empty">暂无收益记录</td>
+                </tr>
+              </tbody>
+            </table>
+            <p class="notice">预估收益不等于可提现收益，以结算确认和风控审核后金额为准。</p>
+          </section>
+
+          <section class="panel" id="risk">
+            <div class="panel-head">
+              <h2>排行榜 / 风控 / 审计</h2>
+              <div class="actions">
+                <button>预览榜单</button>
+                <button class="risk">禁用门店</button>
+                <button>查看日志</button>
+              </div>
+            </div>
+            <div class="status-row">
+              <div class="status"><strong>排行榜配置</strong><br /><small>暂无排行榜配置变更</small></div>
+              <div class="status"><strong>风控中心</strong><br /><small>暂无风控事件</small></div>
+              <div class="status"><strong>第三方配置状态</strong><br /><small>开发阶段全部 Mock/Adapter</small></div>
+              <div class="status"><strong>操作日志</strong><br /><small>暂无操作日志</small></div>
+            </div>
+          </section>
+        </main>
+      </section>
+    </div>
   </body>
 </html>

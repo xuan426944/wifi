@@ -409,6 +409,21 @@ paths:
     post: { summary: 提现审核拒绝并解冻, parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ], responses: { '200': { description: ok } } }
   /admin/withdraws/{id}/query-transfer:
     post: { summary: 提现查单，Mock paid 后写 withdraw_paid 流水, parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ], responses: { '200': { description: remote status } } }
+  /admin/reconciliation:
+    get: { summary: 财务对账列表，开发阶段返回 Mock 对账空状态和差异支持标记, responses: { '200': { description: page } } }
+  /admin/reconciliation/run:
+    post:
+      summary: 发起 Mock 财务对账并写操作日志
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type: { type: string, enum: [withdraw,wallet_ledger,revenue_settlement] }
+                bizDate: { type: string }
+                remark: { type: string }
+      responses: { '200': { description: mock reconciliation result } }
   /admin/ranking/config:
     get: { summary: 排行榜配置, responses: { '200': { description: enabled、enabledTypes、limit、amountDisplayMode、hideRiskStores、visibleScope 等配置 } } }
     post:

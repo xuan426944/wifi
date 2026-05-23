@@ -509,6 +509,44 @@ export class AdminController {
     return ok(result);
   }
 
+  @Get("reconciliation")
+  @RequirePermission("reconciliation.read")
+  reconciliation(@Query("page") page = "1", @Query("pageSize") pageSize = "20") {
+    return ok({
+      ...emptyPage(Number(page), Number(pageSize)),
+      tabs: ["withdraw", "wallet_ledger", "revenue_settlement", "differences"],
+      mockDifferenceSupported: true,
+      emptyText: "暂无对账记录",
+    });
+  }
+
+  @Post("reconciliation/run")
+  @RequirePermission("reconciliation.handle")
+  runReconciliation(
+    @Req() request: any,
+    @Body() body: { type?: string; bizDate?: string; remark?: string; confirm?: boolean } = {},
+  ) {
+    const type = body.type ?? "withdraw";
+    if (!["withdraw", "wallet_ledger", "revenue_settlement"].includes(type)) {
+      throw new ApiException(ERROR_CODES.PARAM_INVALID, "对账类型不合法", 400);
+    }
+    this.log(request, "reconciliation.run", "reconciliation", type, {
+      type,
+      bizDate: body.bizDate ?? new Date().toISOString().slice(0, 10),
+      mockDifferenceSupported: true,
+      remark: body.remark,
+    });
+    return ok({
+      reconcileNo: `RC${Date.now()}`,
+      type,
+      status: "mock_completed",
+      localAmountCent: 0,
+      remoteAmountCent: 0,
+      diffAmountCent: 0,
+      mockDifferenceSupported: true,
+    });
+  }
+
   @Get("ranking/config")
   @RequirePermission("ranking.read")
   rankingConfig() {
@@ -582,7 +620,7 @@ export class AdminController {
   }
 
   @Post("system/config")
-  @RequirePermission("system_config.read")
+  @RequirePermission("system_config.write")
   saveSystemConfig(@Req() request: any) {
     this.log(request, "system.config.save", "system_config", "batch", { sensitiveMasked: true });
     return ok({ saved: true });
@@ -615,7 +653,7 @@ export class AdminController {
   }
 
   @Post("admin-users")
-  @RequirePermission("permission.read")
+  @RequirePermission("permission.write")
   createAdminUser(@Req() request: any) {
     this.log(request, "admin_user.create", "admin_user", "phase_01", {});
     return ok({ id: null, status: "empty_phase_01" });
