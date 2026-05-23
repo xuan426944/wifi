@@ -1,1 +1,27 @@
-<view data-phase="01">暂无商户数据</view>
+<view class="page" data-phase="10">
+  <view wx:if="{{state === 'forbidden'}}">无权访问商家页面，已返回 WiFi 首页</view>
+  <view wx:elif="{{state === 'risk_frozen'}}">当前商户存在风控冻结，不能提现</view>
+  <view wx:else>
+    <view class="title">{{merchantName}}</view>
+    <view>当前门店：{{storeName}}</view>
+    <view>今日预估收益：{{todayEstimatedCent}}</view>
+    <view>昨日确认收益：{{yesterdayConfirmedCent}}</view>
+    <view>本月收益：{{monthRevenueCent}}</view>
+    <view>累计收益：{{totalRevenueCent}}</view>
+    <view>可提现金额：{{availableCent}}</view>
+    <view>提现中金额：{{withdrawingCent}}</view>
+    <view>风控冻结金额：{{frozenRiskCent}}</view>
+    <view>今日扫码：{{todayScanCount}}</view>
+    <view>今日广告完成：{{todayAdCompleteCount}}</view>
+    <view>今日连接成功：{{todayConnectSuccessCount}}</view>
+    <view>当前排名：{{currentRank}}</view>
+    <view>分成比例：{{shareRateText}}</view>
+    <view class="notice">{{notice || '预估收益不等于可提现收益，以结算确认和风控审核后金额为准'}}</view>
+
+    <button bindtap="onWithdrawTap">提现</button>
+    <button bindtap="onRevenueTap">收益明细</button>
+    <button bindtap="onWithdrawRecordsTap">提现记录</button>
+    <button bindtap="onRankingTap">排行榜</button>
+    <button bindtap="onQrcodeTap">门店二维码</button>
+  </view>
+</view>

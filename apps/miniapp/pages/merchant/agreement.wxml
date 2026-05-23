@@ -1,0 +1,5 @@
+<view class="page" data-phase="10">
+  <view class="title">商户协议</view>
+  <view wx:for="{{clauses}}" wx:key="*this">{{item}}</view>
+  <button bindtap="onBackTap">同意并返回</button>
+</view>

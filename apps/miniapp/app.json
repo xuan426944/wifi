@@ -4,7 +4,15 @@
     "pages/ad/index",
     "pages/connect-result/index",
     "pages/manual-connect/index",
-    "pages/merchant/dashboard"
+    "pages/merchant/apply",
+    "pages/merchant/application-status",
+    "pages/merchant/agreement",
+    "pages/merchant/dashboard",
+    "pages/merchant/revenue",
+    "pages/merchant/withdraw",
+    "pages/merchant/withdraw-records",
+    "pages/merchant/qrcode",
+    "pages/ranking/index"
   ],
   "window": {
     "navigationBarTitleText": "门店 WiFi",

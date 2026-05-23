@@ -1,0 +1,17 @@
+<view class="page" data-phase="10">
+  <view wx:if="{{state === 'forbidden'}}">无权访问商家页面，已返回 WiFi 首页</view>
+  <view wx:else>
+    <view class="title">收益明细</view>
+    <view>{{notice}}</view>
+    <view>日期：{{filters.dateRange}}</view>
+    <view>门店：{{filters.storeName}}</view>
+    <view>状态：{{filters.status}}</view>
+    <button bindtap="onRefreshTap">刷新明细</button>
+    <view wx:if="{{state === 'empty'}}">暂无收益明细</view>
+    <view wx:for="{{list}}" wx:key="date">
+      <view>{{item.date}} 扫码 {{item.scanCount}} 广告完成 {{item.adCompleteCount}}</view>
+      <view>有效广告 {{item.effectiveAdCount}} 预估收益 {{item.estimatedCent}} 确认收益 {{item.confirmedCent}}</view>
+      <view>状态：{{item.status}}</view>
+    </view>
+  </view>
+</view>

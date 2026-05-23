@@ -1,0 +1,18 @@
+<view class="page" data-phase="10">
+  <view wx:if="{{state === 'forbidden'}}">无权访问商家页面，已返回 WiFi 首页</view>
+  <view wx:elif="{{state === 'risk_frozen'}}">风控冻结期间不能提现</view>
+  <view wx:else>
+    <view class="title">提现</view>
+    <view>可提现金额：{{availableCent}}</view>
+    <view>最低提现金额：{{minWithdrawCent}}</view>
+    <view>单笔上限：{{singleLimitCent}}</view>
+    <view>日剩余额度：{{dayRemainCent}}</view>
+    <view>{{protectPeriodText}}</view>
+    <view>{{adCompleteText}}</view>
+    <view>{{disabledReason}}</view>
+    <input placeholder="提现金额输入" value="{{amountCent}}" />
+    <button bindtap="onAllTap">全部提现</button>
+    <button bindtap="onSubmitTap">提交提现</button>
+    <button bindtap="onRecordsTap">查看提现记录</button>
+  </view>
+</view>

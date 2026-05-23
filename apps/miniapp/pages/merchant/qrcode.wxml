@@ -1,0 +1,12 @@
+<view class="page" data-phase="10">
+  <view wx:if="{{state === 'forbidden'}}">无权访问商家页面，已返回 WiFi 首页</view>
+  <view wx:else>
+    <view class="title">门店二维码</view>
+    <view>门店选择：{{storeName}}</view>
+    <image src="{{qrcodeUrl}}" mode="aspectFit" />
+    <view>{{saveTip}}</view>
+    <view>{{posterTip}}</view>
+    <button bindtap="onStoreChange">切换门店</button>
+    <button bindtap="onSaveTap">保存二维码</button>
+  </view>
+</view>

@@ -1,1 +1,15 @@
-<view data-phase="01">暂无连接结果</view>
+<view class="page" data-phase="10">
+  <view wx:if="{{status === 'success'}}">
+    <view class="title">{{successText}}</view>
+    <button bindtap="onBackTap">返回</button>
+  </view>
+
+  <view wx:else>
+    <view class="title">{{failedText}}</view>
+    <view>失败原因：{{failReason}}</view>
+    <button bindtap="onCopySsid">复制 WiFi 名称</button>
+    <button bindtap="onCopyPassword">复制密码</button>
+    <button bindtap="onManualTap">打开手动连接指引</button>
+    <button bindtap="onRetryTap">重试连接</button>
+  </view>
+</view>

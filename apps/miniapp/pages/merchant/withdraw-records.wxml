@@ -1,0 +1,18 @@
+<view class="page" data-phase="10">
+  <view wx:if="{{state === 'forbidden'}}">无权访问商家页面，已返回 WiFi 首页</view>
+  <view wx:else>
+    <view class="title">提现记录</view>
+    <view>状态文案：{{statusText}}</view>
+    <button bindtap="onRefreshTap">刷新记录</button>
+    <view wx:if="{{state === 'empty'}}">暂无提现记录</view>
+    <view wx:for="{{list}}" wx:key="withdrawNo">
+      <view>提现单号：{{item.withdrawNo}}</view>
+      <view>金额：{{item.amountCent}}</view>
+      <view>状态：{{item.status}}</view>
+      <view>申请时间：--</view>
+      <view>到账时间：--</view>
+      <view>失败原因：--</view>
+    </view>
+    <view>没有微信最终确认不能标记已到账。</view>
+  </view>
+</view>

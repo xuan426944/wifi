@@ -1,0 +1,18 @@
+<view class="page" data-phase="10">
+  <view wx:if="{{state === 'forbidden'}}">无权访问商家页面，已返回 WiFi 首页</view>
+  <view wx:else>
+    <view class="title">商家排行榜</view>
+    <view>榜单类型：{{rankingType}}</view>
+    <view>展示模式：{{amountDisplayMode}}</view>
+    <view>{{displayModeTip || '排行榜按后台配置展示 exact/range/heat/hidden'}}</view>
+    <view>{{riskTip || '异常门店按后台规则隐藏，新店参与规则由后台决定'}}</view>
+    <button bindtap="onRefreshTap">刷新榜单</button>
+    <button bindtap="onBackDashboard">返回商家中心</button>
+    <view wx:if="{{state === 'empty'}}">暂无排行榜数据</view>
+    <view wx:for="{{list}}" wx:key="rank">
+      <view>名次：{{item.rank}}</view>
+      <view>门店名称：{{item.storeName}}</view>
+      <view>收益/热度：{{item.valueText}}</view>
+    </view>
+  </view>
+</view>

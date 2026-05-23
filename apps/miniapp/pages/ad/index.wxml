@@ -1,1 +1,11 @@
-<view data-phase="01">广告加载中</view>
+<view class="page" data-phase="10">
+  <view class="title">{{storeName}}</view>
+  <view class="status">{{state === 'loading' ? loadText : completeText}}</view>
+  <view class="notice">必须用户点击触发广告，不能自动弹出；广告完成以后才继续获取 WiFi 授权。</view>
+
+  <button bindtap="onStartAdTap">{{startText}}</button>
+  <button bindtap="onRetryTap">重试</button>
+  <button bindtap="onManualTap">查看手动连接</button>
+
+  <view wx:if="{{state === 'manual_fallback'}}">{{manualFallbackText}}</view>
+</view>

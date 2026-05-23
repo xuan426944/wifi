@@ -1,1 +1,12 @@
-<view data-phase="01">请先完成广告授权</view>
+<view class="page" data-phase="10">
+  <view wx:if="{{state === 'forbidden'}}">{{forbiddenText}}</view>
+  <view wx:else>
+    <view class="title">手动连接 WiFi</view>
+    <view>SSID：{{ssid}}</view>
+    <view>密码：{{password}}</view>
+    <button bindtap="onCopySsid">复制 WiFi 名称</button>
+    <button bindtap="onCopyPassword">复制密码</button>
+    <view wx:for="{{steps}}" wx:key="*this">{{index + 1}}. {{item}}</view>
+    <button bindtap="onBackHome">返回 WiFi 首页</button>
+  </view>
+</view>

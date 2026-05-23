@@ -1,0 +1,14 @@
+<view class="page" data-phase="10">
+  <view class="title">申请进度</view>
+  <view wx:if="{{state === 'empty'}}">暂无申请记录</view>
+  <view wx:else>
+    <view>申请单号：{{applicationNo}}</view>
+    <view>审核状态：{{statusText}}</view>
+    <view wx:if="{{rejectReason}}">驳回原因：{{rejectReason}}</view>
+    <view>{{nextStep}}</view>
+  </view>
+  <view>未授权商户不能进入商家收益页面。</view>
+  <button bindtap="onRefreshTap">刷新进度</button>
+  <button bindtap="onCancelTap">取消申请</button>
+  <button bindtap="onBackHome">返回 WiFi 首页</button>
+</view>
