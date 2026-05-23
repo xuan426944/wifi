@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Inject, Param, Post, Put, Query, Req, UseGuards } from "@nestjs/common";
 import { emptyPage, ok } from "../common/api-response";
 import { ApiException, ERROR_CODES } from "../common/errors";
+import { ConfigCenterService } from "../config/config-center.service";
 import { CreateMerchantDto, CreateStoreDto, SaveWifiConfigDto, UpdateShareRateDto, UpdateStoreDto } from "../database/dtos";
 import { RankingConfigEntity } from "../database/entities";
 import { InMemoryStore } from "../database/in-memory-store";
@@ -43,6 +44,7 @@ export class AdminController {
     @Inject(WithdrawService) private readonly withdrawsService: WithdrawService,
     @Inject(RankingService) private readonly rankings: RankingService,
     @Inject(RiskService) private readonly risks: RiskService,
+    @Inject(ConfigCenterService) private readonly configCenter: ConfigCenterService,
   ) {}
 
   @Get("dashboard")
@@ -609,35 +611,28 @@ export class AdminController {
   @Get("system/config")
   @RequirePermission("system_config.read")
   systemConfig() {
-    return ok({
-      configs: [
-        { key: "app.auth_mode", value: "mock_wechat", sensitive: false },
-        { key: "ad.mode", value: "mock", sensitive: false },
-        { key: "wifi.mode", value: "mock", sensitive: false },
-        { key: "wechat.app_secret", value: "***", sensitive: true },
-      ],
-    });
+    return ok(this.configCenter.list());
   }
 
   @Post("system/config")
   @RequirePermission("system_config.write")
-  saveSystemConfig(@Req() request: any) {
-    this.log(request, "system.config.save", "system_config", "batch", { sensitiveMasked: true });
-    return ok({ saved: true });
+  saveSystemConfig(
+    @Req() request: any,
+    @Body() body: { configs?: { key: string; value: unknown }[]; reason?: string; confirm?: boolean } = {},
+  ) {
+    const result = this.configCenter.save(body);
+    this.log(request, "system.config.save", "system_config", "batch", {
+      ...result,
+      reason: body.reason,
+      sensitiveMasked: true,
+    });
+    return ok(result);
   }
 
   @Get("integrations/status")
   @RequirePermission("system_config.read")
   integrationStatus() {
-    return ok({
-      authMode: "mock_wechat",
-      adMode: "mock",
-      wifiMode: "mock",
-      paymentMode: "mock",
-      transferMode: "mock",
-      missingProductionItems: ["WECHAT_APP_ID", "WECHAT_PAY_MCH_ID"],
-      readyForDevelopment: true,
-    });
+    return ok(this.configCenter.integrationsStatus());
   }
 
   @Get("operation-logs")

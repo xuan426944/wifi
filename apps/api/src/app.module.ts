@@ -6,6 +6,7 @@ import { AdminController } from "./admin/admin.controller";
 import { AuthController } from "./auth/auth.controller";
 import { AuthService } from "./auth/auth.service";
 import { APP_CONFIG, loadAppConfig } from "./config/app-config";
+import { ConfigCenterService } from "./config/config-center.service";
 import { InMemoryStore } from "./database/in-memory-store";
 import {
   MemoryMerchantRepository,
@@ -76,6 +77,7 @@ import { join } from "node:path";
     WithdrawService,
     RankingService,
     RiskService,
+    ConfigCenterService,
     MigrationService,
     OperationLogService,
     AdminPermissionGuard,
