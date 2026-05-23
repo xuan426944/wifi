@@ -55,6 +55,8 @@ export interface StoreEntity {
   contactPhone?: string;
   shareRateBps?: number;
   status: MerchantStatus;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface StoreWifiEntity {
@@ -71,7 +73,17 @@ export interface StoreWifiEntity {
   showManualFallback: boolean;
   passwordViewPolicy: "never_plain" | "copy_only" | "second_confirm_plain";
   remark?: string;
+  createdAt?: string;
   updatedAt: string;
+}
+
+export interface QrcodeEntity {
+  id: number;
+  storeId: number;
+  scene: string;
+  qrcodeUrl: string | null;
+  status: "active" | "disabled";
+  createdAt: string;
 }
 
 export interface MerchantWalletEntity {

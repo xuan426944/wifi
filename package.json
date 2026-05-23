@@ -12,7 +12,8 @@
     "test": "npm run test --workspaces --if-present",
     "phase:01:check": "npm run test && npm run build",
     "phase:02:check": "npm run test && npm run build",
-    "phase:03:check": "npm run test && npm run build"
+    "phase:03:check": "npm run test && npm run build",
+    "phase:04:check": "npm run test && npm run build"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

@@ -13,7 +13,18 @@ export interface AdProvider {
 }
 
 export interface WifiProvider {
-  getConnectInfo(input: { storeId: number; rewardToken: string }): Promise<{
+  getConnectInfo(input: {
+    storeId: number;
+    rewardToken: string;
+    configuredWifi?: {
+      ssid: string;
+      password: string;
+      securityType: "none" | "WEP" | "WPA" | "WPA2" | "WPA3";
+      connectMode: "mock" | "wechat" | "manual";
+      allowCopyPassword: boolean;
+      showManualFallback: boolean;
+    };
+  }): Promise<{
     ssid: string;
     password: string;
     securityType: "none" | "WEP" | "WPA" | "WPA2" | "WPA3";

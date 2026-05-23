@@ -5,6 +5,10 @@ describe("Phase 01 admin page scaffold", () => {
   it("contains empty states and high-risk controls from the V3.4 specs", () => {
     expect(getAdminEmptyState("/admin/dashboard")).toBe("暂无运营数据");
     expect(adminPageCatalog.some((page) => page.path === "/admin/wifi" && page.emptyState === "未配置")).toBe(true);
+    expect(adminPageCatalog.some((page) => page.path === "/admin/qrcodes" && page.emptyState === "暂无二维码")).toBe(true);
+    expect(
+      adminPageCatalog.some((page) => page.path === "/admin/wifi" && page.fields.includes("手动兜底")),
+    ).toBe(true);
     expect(
       adminPageCatalog.some((page) => page.path === "/admin/withdraws" && page.highRiskActions?.includes("审核通过")),
     ).toBe(true);

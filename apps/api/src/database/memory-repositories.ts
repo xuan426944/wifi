@@ -1,6 +1,6 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { CreateMerchantDto, CreateStoreDto, SaveWifiConfigDto, UpdateShareRateDto } from "./dtos";
-import { MerchantEntity, StoreEntity, StoreWifiEntity, UserEntity } from "./entities";
+import { CreateMerchantDto, CreateStoreDto, SaveWifiConfigDto, UpdateShareRateDto, UpdateStoreDto } from "./dtos";
+import { MerchantEntity, QrcodeEntity, StoreEntity, StoreWifiEntity, UserEntity } from "./entities";
 import { InMemoryStore } from "./in-memory-store";
 import {
   MerchantRepository,
@@ -8,11 +8,23 @@ import {
   UserRepository,
   WalletRepository,
   WifiConfigRepository,
+  QrcodeRepository,
 } from "./repositories";
 
 const pad = (value: number) => String(value).padStart(6, "0");
 const maskPassword = (password?: string) => (password ? "*".repeat(Math.min(Math.max(password.length, 8), 12)) : "********");
 const cipherPassword = (password?: string) => (password ? `mock-cipher:${Buffer.from(password).toString("base64url")}` : undefined);
+const decipherPassword = (cipher?: string) => {
+  if (!cipher?.startsWith("mock-cipher:")) {
+    return undefined;
+  }
+  const payload = cipher.slice("mock-cipher:".length);
+  try {
+    return Buffer.from(payload, "base64url").toString("utf8");
+  } catch {
+    return payload;
+  }
+};
 
 @Injectable()
 export class MemoryUserRepository implements UserRepository {
@@ -106,6 +118,7 @@ export class MemoryStoreRepository implements StoreRepository {
 
   create(input: CreateStoreDto): StoreEntity {
     const id = this.store.nextStoreId();
+    const now = new Date().toISOString();
     const store: StoreEntity = {
       id,
       merchantId: input.merchantId,
@@ -118,9 +131,40 @@ export class MemoryStoreRepository implements StoreRepository {
       contactName: input.contactName,
       contactPhone: input.contactPhone,
       shareRateBps: input.shareRateBps ?? undefined,
-      status: "active",
+      status: input.status ?? "active",
+      createdAt: now,
+      updatedAt: now,
     };
     this.store.stores.push(store);
+    return store;
+  }
+
+  update(id: number, input: UpdateStoreDto) {
+    const store = this.findById(id);
+    if (!store) {
+      return undefined;
+    }
+    store.merchantId = input.merchantId ?? store.merchantId;
+    store.name = input.name ?? store.name;
+    store.city = input.city ?? store.city;
+    store.district = input.district ?? store.district;
+    store.address = input.address ?? store.address;
+    store.industry = input.industry ?? store.industry;
+    store.contactName = input.contactName ?? store.contactName;
+    store.contactPhone = input.contactPhone ?? store.contactPhone;
+    store.shareRateBps = input.shareRateBps ?? store.shareRateBps;
+    store.status = input.status ?? store.status;
+    store.updatedAt = new Date().toISOString();
+    return store;
+  }
+
+  setStatus(id: number, status: StoreEntity["status"]) {
+    const store = this.findById(id);
+    if (!store) {
+      return undefined;
+    }
+    store.status = status;
+    store.updatedAt = new Date().toISOString();
     return store;
   }
 
@@ -140,6 +184,10 @@ export class MemoryWifiConfigRepository implements WifiConfigRepository {
 
   list() {
     return [...this.store.storeWifi];
+  }
+
+  findById(id: number) {
+    return this.store.storeWifi.find((wifi) => wifi.id === id);
   }
 
   findPrimaryByStoreId(storeId: number) {
@@ -163,9 +211,13 @@ export class MemoryWifiConfigRepository implements WifiConfigRepository {
         existing.passwordMasked = maskPassword(input.password);
       }
       existing.updatedAt = new Date().toISOString();
+      if (existing.isPrimary) {
+        this.clearOtherPrimary(existing.storeId, existing.id);
+      }
       return existing;
     }
 
+    const now = new Date().toISOString();
     const wifi: StoreWifiEntity = {
       id: this.store.nextWifiId(),
       storeId: input.storeId,
@@ -180,19 +232,71 @@ export class MemoryWifiConfigRepository implements WifiConfigRepository {
       showManualFallback: input.showManualFallback ?? true,
       passwordViewPolicy: input.passwordViewPolicy ?? "never_plain",
       remark: input.remark,
-      updatedAt: new Date().toISOString(),
+      createdAt: now,
+      updatedAt: now,
     };
     this.store.storeWifi.push(wifi);
+    if (wifi.isPrimary) {
+      this.clearOtherPrimary(wifi.storeId, wifi.id);
+    }
     return wifi;
   }
 
-  disable(id: number) {
+  setEnabled(id: number, isEnabled: boolean) {
     const wifi = this.store.storeWifi.find((item) => item.id === id);
     if (wifi) {
-      wifi.isEnabled = false;
+      wifi.isEnabled = isEnabled;
       wifi.updatedAt = new Date().toISOString();
     }
     return wifi;
+  }
+
+  copyPassword(id: number) {
+    const wifi = this.findById(id);
+    return decipherPassword(wifi?.passwordCipher);
+  }
+
+  private clearOtherPrimary(storeId: number, currentId: number) {
+    for (const wifi of this.store.storeWifi) {
+      if (wifi.storeId === storeId && wifi.id !== currentId) {
+        wifi.isPrimary = false;
+      }
+    }
+  }
+}
+
+@Injectable()
+export class MemoryQrcodeRepository implements QrcodeRepository {
+  constructor(@Inject(InMemoryStore) private readonly store: InMemoryStore) {}
+
+  list() {
+    return [...this.store.qrcodes];
+  }
+
+  findByScene(scene: string) {
+    return this.store.qrcodes.find((qrcode) => qrcode.scene === scene);
+  }
+
+  findActiveByStoreId(storeId: number) {
+    return this.store.qrcodes.find((qrcode) => qrcode.storeId === storeId && qrcode.status === "active");
+  }
+
+  generate(storeId: number): QrcodeEntity {
+    const existing = this.findActiveByStoreId(storeId);
+    if (existing) {
+      return existing;
+    }
+    const scene = `STORE_${storeId}`;
+    const qrcode: QrcodeEntity = {
+      id: this.store.nextQrcodeId(),
+      storeId,
+      scene,
+      qrcodeUrl: `/mock/qrcode/${scene}.png`,
+      status: "active",
+      createdAt: new Date().toISOString(),
+    };
+    this.store.qrcodes.push(qrcode);
+    return qrcode;
   }
 }
 

@@ -342,6 +342,10 @@ paths:
       summary: 修改门店分成比例
       parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ]
       responses: { '200': { description: ok } }
+  /admin/stores/{id}/disable:
+    post: { summary: 禁用门店, parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ], responses: { '200': { description: ok } } }
+  /admin/stores/{id}/enable:
+    post: { summary: 启用门店, parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ], responses: { '200': { description: ok } } }
   /admin/wifi:
     get: { summary: WiFi 配置列表, responses: { '200': { description: page } } }
   /admin/wifi/save:
@@ -369,6 +373,12 @@ paths:
       responses: { '200': { description: ok } }
   /admin/wifi/{id}/disable:
     post: { summary: 禁用 WiFi, parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ], responses: { '200': { description: ok } } }
+  /admin/wifi/{id}/enable:
+    post: { summary: 启用 WiFi, parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ], responses: { '200': { description: ok } } }
+  /admin/wifi/{id}/copy-password:
+    post: { summary: 复制 WiFi 密码，必须鉴权和记录日志, parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ], responses: { '200': { description: ssid、password、manualFallbackSteps } } }
+  /admin/qrcodes:
+    get: { summary: 门店二维码列表, responses: { '200': { description: page } } }
   /admin/qrcode/generate:
     post: { summary: 生成门店二维码, responses: { '200': { description: qrcodeUrl } } }
   /admin/ads:

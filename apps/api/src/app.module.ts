@@ -9,6 +9,7 @@ import { APP_CONFIG, loadAppConfig } from "./config/app-config";
 import { InMemoryStore } from "./database/in-memory-store";
 import {
   MemoryMerchantRepository,
+  MemoryQrcodeRepository,
   MemoryStoreRepository,
   MemoryUserRepository,
   MemoryWalletRepository,
@@ -17,6 +18,7 @@ import {
 import { MIGRATIONS_DIR, MigrationService } from "./database/migration.service";
 import {
   MERCHANT_REPOSITORY,
+  QRCODE_REPOSITORY,
   STORE_REPOSITORY,
   USER_REPOSITORY,
   WALLET_REPOSITORY,
@@ -76,6 +78,7 @@ import { join } from "node:path";
     { provide: MERCHANT_REPOSITORY, useClass: MemoryMerchantRepository },
     { provide: STORE_REPOSITORY, useClass: MemoryStoreRepository },
     { provide: WIFI_CONFIG_REPOSITORY, useClass: MemoryWifiConfigRepository },
+    { provide: QRCODE_REPOSITORY, useClass: MemoryQrcodeRepository },
     { provide: WALLET_REPOSITORY, useClass: MemoryWalletRepository },
     { provide: AUTH_PROVIDER, useClass: MockAuthProvider },
     { provide: AD_PROVIDER, useClass: MockAdProvider },

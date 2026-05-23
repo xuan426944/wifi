@@ -44,15 +44,18 @@ export class MockAdProvider implements AdProvider {
 
 @Injectable()
 export class MockWifiProvider implements WifiProvider {
-  async getConnectInfo() {
+  async getConnectInfo(input: Parameters<WifiProvider["getConnectInfo"]>[0]) {
+    const configured = input.configuredWifi;
     return {
-      ssid: "Mock-WiFi",
-      password: "12345678",
-      securityType: "WPA2" as const,
-      connectMode: "mock" as const,
+      ssid: configured?.ssid ?? "Mock-WiFi",
+      password: configured?.password ?? "12345678",
+      securityType: configured?.securityType ?? ("WPA2" as const),
+      connectMode: configured?.connectMode ?? ("mock" as const),
       manualFallback: {
-        allowCopyPassword: true,
-        steps: ["复制 WiFi 名称", "复制 WiFi 密码", "打开系统设置并手动连接"],
+        allowCopyPassword: configured?.allowCopyPassword ?? true,
+        steps: configured?.showManualFallback
+          ? ["复制 WiFi 名称", "复制 WiFi 密码", "打开系统设置并手动连接", "返回首页"]
+          : [],
       },
     };
   }

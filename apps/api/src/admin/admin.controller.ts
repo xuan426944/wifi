@@ -1,10 +1,12 @@
 import { Body, Controller, Get, Inject, Param, Post, Put, Query, Req, UseGuards } from "@nestjs/common";
 import { emptyPage, ok } from "../common/api-response";
 import { ApiException, ERROR_CODES } from "../common/errors";
-import { CreateMerchantDto, CreateStoreDto, SaveWifiConfigDto, UpdateShareRateDto } from "../database/dtos";
+import { CreateMerchantDto, CreateStoreDto, SaveWifiConfigDto, UpdateShareRateDto, UpdateStoreDto } from "../database/dtos";
 import {
   MERCHANT_REPOSITORY,
   MerchantRepository,
+  QRCODE_REPOSITORY,
+  QrcodeRepository,
   STORE_REPOSITORY,
   StoreRepository,
   WALLET_REPOSITORY,
@@ -16,6 +18,10 @@ import { OperationLogService } from "../operation-log/operation-log.service";
 import { RequirePermission } from "../rbac/decorators";
 import { AdminPermissionGuard } from "../rbac/admin-permission.guard";
 
+const WIFI_SECURITY_TYPES = ["none", "WEP", "WPA", "WPA2", "WPA3"] as const;
+const WIFI_CONNECT_MODES = ["mock", "wechat", "manual"] as const;
+const PASSWORD_VIEW_POLICIES = ["never_plain", "copy_only", "second_confirm_plain"] as const;
+
 @Controller("admin")
 @UseGuards(AdminPermissionGuard)
 export class AdminController {
@@ -23,6 +29,7 @@ export class AdminController {
     @Inject(MERCHANT_REPOSITORY) private readonly merchantsRepo: MerchantRepository,
     @Inject(STORE_REPOSITORY) private readonly storesRepo: StoreRepository,
     @Inject(WIFI_CONFIG_REPOSITORY) private readonly wifiRepo: WifiConfigRepository,
+    @Inject(QRCODE_REPOSITORY) private readonly qrcodesRepo: QrcodeRepository,
     @Inject(WALLET_REPOSITORY) private readonly walletsRepo: WalletRepository,
     @Inject(OperationLogService) private readonly operationLogs: OperationLogService,
   ) {}
@@ -157,30 +164,71 @@ export class AdminController {
   @Get("stores")
   @RequirePermission("admin.dashboard.read")
   stores() {
-    const list = this.storesRepo.list();
+    const list = this.storesRepo.list().map((store) => this.serializeStore(store));
     return ok({ ...emptyPage(), list, total: list.length });
   }
 
   @Post("stores")
   @RequirePermission("store.create")
   createStore(@Req() request: any, @Body() body: CreateStoreDto) {
+    this.assertStoreInput(body, true);
     const store = this.storesRepo.create(body);
     this.log(request, "store.create", "store", store.id, { storeNo: store.storeNo });
-    return ok(store);
+    return ok(this.serializeStore(store));
   }
 
   @Get("stores/:id")
   @RequirePermission("admin.dashboard.read")
   storeDetail(@Param("id") id: string) {
     const store = this.storesRepo.findById(Number(id));
-    const wifi = this.wifiRepo.findPrimaryByStoreId(Number(id));
-    return ok({ store, wifiStatus: wifi ? "已配置" : "未配置", wifi: wifi ? this.sanitizeWifi(wifi) : null });
+    if (!store) {
+      throw new ApiException(ERROR_CODES.NOT_FOUND, "门店不存在", 404);
+    }
+    const wifi = this.findStoreWifiForAdmin(Number(id));
+    const qrcode = this.qrcodesRepo.findActiveByStoreId(Number(id));
+    return ok({
+      store: this.serializeStore(store),
+      wifiStatus: this.wifiStatusText(wifi),
+      wifi: wifi ? this.sanitizeWifi(wifi) : null,
+      qrcodeStatus: qrcode ? "已生成" : "未生成",
+      qrcode,
+    });
   }
 
   @Put("stores/:id")
   @RequirePermission("store.create")
-  updateStore(@Param("id") id: string) {
-    return ok({ id: Number(id), updated: true });
+  updateStore(@Req() request: any, @Param("id") id: string, @Body() body: UpdateStoreDto) {
+    this.assertStoreInput({ ...body, merchantId: body.merchantId ?? this.storesRepo.findById(Number(id))?.merchantId }, false);
+    const store = this.storesRepo.update(Number(id), body);
+    if (!store) {
+      throw new ApiException(ERROR_CODES.NOT_FOUND, "门店不存在", 404);
+    }
+    this.log(request, "store.update", "store", id, { storeNo: store.storeNo });
+    return ok(this.serializeStore(store));
+  }
+
+  @Post("stores/:id/disable")
+  @RequirePermission("store.create")
+  disableStore(@Req() request: any, @Param("id") id: string, @Body() body: { reason?: string; confirm?: boolean }) {
+    this.assertConfirm(body.confirm, body.reason, "禁用门店必须填写原因并二次确认");
+    const store = this.storesRepo.setStatus(Number(id), "disabled");
+    if (!store) {
+      throw new ApiException(ERROR_CODES.NOT_FOUND, "门店不存在", 404);
+    }
+    this.log(request, "store.disable", "store", id, { status: "disabled", reason: body.reason });
+    return ok(this.serializeStore(store));
+  }
+
+  @Post("stores/:id/enable")
+  @RequirePermission("store.create")
+  enableStore(@Req() request: any, @Param("id") id: string, @Body() body: { reason?: string; confirm?: boolean }) {
+    this.assertConfirm(body.confirm, body.reason, "启用门店必须填写原因并二次确认");
+    const store = this.storesRepo.setStatus(Number(id), "active");
+    if (!store) {
+      throw new ApiException(ERROR_CODES.NOT_FOUND, "门店不存在", 404);
+    }
+    this.log(request, "store.enable", "store", id, { status: "active", reason: body.reason });
+    return ok(this.serializeStore(store));
   }
 
   @Post("stores/:id/share-rate")
@@ -195,31 +243,112 @@ export class AdminController {
   @Get("wifi")
   @RequirePermission("admin.dashboard.read")
   wifiList() {
-    const list = this.wifiRepo.list().map((wifi) => this.sanitizeWifi(wifi));
+    const stores = this.storesRepo.list();
+    const list = stores.map((store) => {
+      const wifi = this.findStoreWifiForAdmin(store.id);
+      return {
+        ...(wifi ? this.sanitizeWifi(wifi) : { ssid: null, passwordMasked: "未配置" }),
+        id: wifi?.id ?? null,
+        storeId: store.id,
+        storeName: store.name,
+        merchantId: store.merchantId,
+        merchantName: this.merchantsRepo.findById(store.merchantId)?.name ?? null,
+        wifiStatus: this.wifiStatusText(wifi),
+      };
+    });
     return ok({ ...emptyPage(), list, total: list.length, emptyText: "未配置" });
   }
 
   @Post("wifi/save")
   @RequirePermission("wifi.write")
   saveWifi(@Req() request: any, @Body() body: SaveWifiConfigDto) {
-    const wifi = this.wifiRepo.save(body);
+    const wifiInput = this.normalizeWifiInput(body);
+    const wifi = this.wifiRepo.save(wifiInput);
     this.log(request, "wifi.save", "store_wifi", wifi.id, { ssid: wifi.ssid, passwordMasked: wifi.passwordMasked });
     return ok(this.sanitizeWifi(wifi));
   }
 
   @Post("wifi/:id/disable")
   @RequirePermission("wifi.write")
-  disableWifi(@Req() request: any, @Param("id") id: string) {
-    const wifi = this.wifiRepo.disable(Number(id));
-    this.log(request, "wifi.disable", "store_wifi", id, { status: "disabled" });
-    return ok({ id: Number(id), disabled: Boolean(wifi) });
+  disableWifi(@Req() request: any, @Param("id") id: string, @Body() body: { reason?: string; confirm?: boolean }) {
+    this.assertConfirm(body.confirm, body.reason, "禁用 WiFi 必须填写原因并二次确认");
+    const wifi = this.wifiRepo.setEnabled(Number(id), false);
+    if (!wifi) {
+      throw new ApiException(ERROR_CODES.NOT_FOUND, "WiFi 配置不存在", 404);
+    }
+    this.log(request, "wifi.disable", "store_wifi", id, { status: "disabled", reason: body.reason });
+    return ok(this.sanitizeWifi(wifi));
+  }
+
+  @Post("wifi/:id/enable")
+  @RequirePermission("wifi.write")
+  enableWifi(@Req() request: any, @Param("id") id: string, @Body() body: { reason?: string; confirm?: boolean }) {
+    this.assertConfirm(body.confirm, body.reason, "启用 WiFi 必须填写原因并二次确认");
+    const wifi = this.wifiRepo.setEnabled(Number(id), true);
+    if (!wifi) {
+      throw new ApiException(ERROR_CODES.NOT_FOUND, "WiFi 配置不存在", 404);
+    }
+    this.log(request, "wifi.enable", "store_wifi", id, { status: "enabled", reason: body.reason });
+    return ok(this.sanitizeWifi(wifi));
+  }
+
+  @Post("wifi/:id/copy-password")
+  @RequirePermission("wifi.password.copy")
+  copyWifiPassword(@Req() request: any, @Param("id") id: string, @Body() body: { reason?: string; confirm?: boolean }) {
+    this.assertConfirm(body.confirm, body.reason, "复制 WiFi 密码必须填写原因并二次确认");
+    const wifi = this.wifiRepo.findById(Number(id));
+    if (!wifi) {
+      throw new ApiException(ERROR_CODES.NOT_FOUND, "WiFi 配置不存在", 404);
+    }
+    if (!wifi.allowCopyPassword) {
+      throw new ApiException(ERROR_CODES.ADMIN_FORBIDDEN, "当前 WiFi 不允许复制密码", 403);
+    }
+    const password = this.wifiRepo.copyPassword(wifi.id);
+    this.log(request, "wifi.password.copy", "store_wifi", id, {
+      ssid: wifi.ssid,
+      passwordMasked: wifi.passwordMasked,
+      reason: body.reason,
+    });
+    return ok({
+      id: wifi.id,
+      storeId: wifi.storeId,
+      ssid: wifi.ssid,
+      password,
+      securityType: wifi.securityType,
+      copyNotice: "仅用于门店现场连接支持，请勿外泄",
+      manualFallbackSteps: ["复制 WiFi 名称", "复制 WiFi 密码", "打开系统设置并手动连接", "返回首页"],
+    });
   }
 
   @Post("qrcode/generate")
   @RequirePermission("store.create")
-  generateQrcode(@Req() request: any) {
-    this.log(request, "qrcode.generate", "qrcode", "phase_01", { qrcodeUrl: null });
-    return ok({ qrcodeUrl: null, status: "empty_phase_01" });
+  generateQrcode(@Req() request: any, @Body() body: { storeId: number }) {
+    const store = this.storesRepo.findById(Number(body.storeId));
+    if (!store) {
+      throw new ApiException(ERROR_CODES.NOT_FOUND, "门店不存在", 404);
+    }
+    const qrcode = this.qrcodesRepo.generate(store.id);
+    this.log(request, "qrcode.generate", "qrcode", qrcode.id, {
+      storeId: store.id,
+      scene: qrcode.scene,
+      qrcodeUrl: qrcode.qrcodeUrl,
+    });
+    return ok(qrcode);
+  }
+
+  @Get("qrcodes")
+  @RequirePermission("admin.dashboard.read")
+  qrcodes() {
+    const list = this.qrcodesRepo.list().map((qrcode) => {
+      const store = this.storesRepo.findById(qrcode.storeId);
+      const merchant = store ? this.merchantsRepo.findById(store.merchantId) : undefined;
+      return {
+        ...qrcode,
+        storeName: store?.name ?? null,
+        merchantName: merchant?.name ?? null,
+      };
+    });
+    return ok({ ...emptyPage(), list, total: list.length });
   }
 
   @Get("ads")
@@ -412,9 +541,100 @@ export class AdminController {
     });
   }
 
+  private serializeStore(store: NonNullable<ReturnType<StoreRepository["findById"]>>) {
+    const merchant = this.merchantsRepo.findById(store.merchantId);
+    const wifi = this.findStoreWifiForAdmin(store.id);
+    const qrcode = this.qrcodesRepo.findActiveByStoreId(store.id);
+    return {
+      ...store,
+      merchantName: merchant?.name ?? null,
+      wifiStatus: this.wifiStatusText(wifi),
+      qrcodeStatus: qrcode ? "已生成" : "未生成",
+    };
+  }
+
+  private findStoreWifiForAdmin(storeId: number) {
+    const storeWifi = this.wifiRepo.list().filter((wifi) => wifi.storeId === storeId);
+    return storeWifi.find((wifi) => wifi.isPrimary) ?? storeWifi[0];
+  }
+
+  private wifiStatusText(wifi: { isEnabled: boolean } | undefined) {
+    if (!wifi) {
+      return "未配置";
+    }
+    return wifi.isEnabled ? "已配置" : "已禁用";
+  }
+
+  private assertStoreInput(input: Partial<CreateStoreDto>, isCreate: boolean) {
+    if (isCreate && !input.merchantId) {
+      throw new ApiException(ERROR_CODES.PARAM_INVALID, "所属商户必填", 400);
+    }
+    if (input.merchantId && !this.merchantsRepo.findById(Number(input.merchantId))) {
+      throw new ApiException(ERROR_CODES.NOT_FOUND, "所属商户不存在", 404);
+    }
+    if (isCreate && !String(input.name ?? "").trim()) {
+      throw new ApiException(ERROR_CODES.PARAM_INVALID, "门店名称必填", 400);
+    }
+    if (input.shareRateBps !== undefined && input.shareRateBps !== null) {
+      this.assertBps(input.shareRateBps);
+    }
+  }
+
+  private normalizeWifiInput(input: SaveWifiConfigDto): SaveWifiConfigDto {
+    const existing = input.id ? this.wifiRepo.findById(Number(input.id)) : undefined;
+    if (input.id && !existing) {
+      throw new ApiException(ERROR_CODES.NOT_FOUND, "WiFi 配置不存在", 404);
+    }
+    if (!this.storesRepo.findById(Number(input.storeId))) {
+      throw new ApiException(ERROR_CODES.NOT_FOUND, "门店不存在", 404);
+    }
+    const ssid = String(input.ssid ?? "").trim();
+    if (!ssid || ssid.length > 64) {
+      throw new ApiException(ERROR_CODES.PARAM_INVALID, "WiFi 名称必须为 1-64 字符", 400);
+    }
+    const securityType = input.securityType ?? "WPA2";
+    if (!WIFI_SECURITY_TYPES.includes(securityType)) {
+      throw new ApiException(ERROR_CODES.PARAM_INVALID, "WiFi 加密类型不合法", 400);
+    }
+    const connectMode = input.connectMode ?? "mock";
+    if (!WIFI_CONNECT_MODES.includes(connectMode)) {
+      throw new ApiException(ERROR_CODES.PARAM_INVALID, "WiFi 连接模式不合法", 400);
+    }
+    const passwordViewPolicy = input.passwordViewPolicy ?? "never_plain";
+    if (!PASSWORD_VIEW_POLICIES.includes(passwordViewPolicy)) {
+      throw new ApiException(ERROR_CODES.PARAM_INVALID, "密码查看策略不合法", 400);
+    }
+    if (!input.id && !input.password) {
+      throw new ApiException(ERROR_CODES.PARAM_INVALID, "新增 WiFi 必须填写密码，开发阶段请使用 mock 密码", 400);
+    }
+    return {
+      ...input,
+      ssid,
+      securityType,
+      connectMode,
+      passwordViewPolicy,
+      isPrimary: input.isPrimary ?? true,
+      isEnabled: input.isEnabled ?? true,
+      allowCopyPassword: input.allowCopyPassword ?? true,
+      showManualFallback: input.showManualFallback ?? true,
+    };
+  }
+
   private assertShareRate(shareRateBps: number, reason: string, confirm: boolean) {
     if (!confirm || !reason || shareRateBps < 0 || shareRateBps > 10000) {
       throw new ApiException(ERROR_CODES.SHARE_RATE_INVALID, "分成比例不合法或未二次确认", 400);
+    }
+  }
+
+  private assertBps(shareRateBps: number) {
+    if (shareRateBps < 0 || shareRateBps > 10000) {
+      throw new ApiException(ERROR_CODES.SHARE_RATE_INVALID, "分成比例不合法", 400);
+    }
+  }
+
+  private assertConfirm(confirm: boolean | undefined, reason: string | undefined, message: string) {
+    if (!confirm || !String(reason ?? "").trim()) {
+      throw new ApiException(ERROR_CODES.PARAM_INVALID, message, 400);
     }
   }
 

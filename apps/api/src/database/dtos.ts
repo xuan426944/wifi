@@ -1,4 +1,4 @@
-import { WifiConnectMode, WifiSecurityType } from "./entities";
+import { MerchantStatus, WifiConnectMode, WifiSecurityType } from "./entities";
 
 export interface CreateMerchantDto {
   name: string;
@@ -25,6 +25,20 @@ export interface CreateStoreDto {
   contactName?: string;
   contactPhone?: string;
   shareRateBps?: number | null;
+  status?: MerchantStatus;
+}
+
+export interface UpdateStoreDto {
+  merchantId?: number;
+  name?: string;
+  city?: string;
+  district?: string;
+  address?: string;
+  industry?: string;
+  contactName?: string;
+  contactPhone?: string;
+  shareRateBps?: number | null;
+  status?: MerchantStatus;
 }
 
 export interface SaveWifiConfigDto {

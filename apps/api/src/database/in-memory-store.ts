@@ -3,6 +3,7 @@ import {
   MerchantEntity,
   MerchantOwnerEntity,
   MerchantWalletEntity,
+  QrcodeEntity,
   StoreEntity,
   StoreWifiEntity,
   UserEntity,
@@ -30,6 +31,7 @@ export class InMemoryStore {
   private merchantSeq = 4;
   private storeSeq = 1;
   private wifiSeq = 1;
+  private qrcodeSeq = 1;
 
   readonly users: UserEntity[] = [
     { id: 1, openid: "mock_customer", userType: "customer", status: "active" },
@@ -130,6 +132,8 @@ export class InMemoryStore {
       city: "上海",
       address: "Mock 路 1 号",
       status: "active",
+      createdAt: new Date(0).toISOString(),
+      updatedAt: new Date(0).toISOString(),
     },
   ];
 
@@ -138,7 +142,7 @@ export class InMemoryStore {
       id: 1,
       storeId: 1,
       ssid: "Mock-WiFi",
-      passwordCipher: "mock-cipher:12345678",
+      passwordCipher: "mock-cipher:MTIzNDU2Nzg",
       passwordMasked: "********",
       securityType: "WPA2",
       connectMode: "mock",
@@ -148,7 +152,19 @@ export class InMemoryStore {
       showManualFallback: true,
       passwordViewPolicy: "never_plain",
       remark: "Phase 02 mock WiFi",
+      createdAt: new Date(0).toISOString(),
       updatedAt: new Date(0).toISOString(),
+    },
+  ];
+
+  readonly qrcodes: QrcodeEntity[] = [
+    {
+      id: 1,
+      storeId: 1,
+      scene: "STORE_1",
+      qrcodeUrl: "/mock/qrcode/STORE_1.png",
+      status: "active",
+      createdAt: new Date(0).toISOString(),
     },
   ];
 
@@ -221,5 +237,10 @@ export class InMemoryStore {
   nextWifiId() {
     this.wifiSeq += 1;
     return this.wifiSeq;
+  }
+
+  nextQrcodeId() {
+    this.qrcodeSeq += 1;
+    return this.qrcodeSeq;
   }
 }

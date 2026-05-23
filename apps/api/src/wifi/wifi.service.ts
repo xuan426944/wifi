@@ -49,9 +49,18 @@ export class WifiService {
     if (!configured) {
       throw new ApiException(ERROR_CODES.WIFI_NOT_CONFIGURED, "门店 WiFi 未配置", 400);
     }
+    const password = this.wifiConfigs.copyPassword(configured.id) ?? "";
     const connectInfo = await this.wifiProvider.getConnectInfo({
       storeId: token.storeId,
       rewardToken,
+      configuredWifi: {
+        ssid: configured.ssid,
+        password,
+        securityType: configured.securityType,
+        connectMode: configured.connectMode,
+        allowCopyPassword: configured.allowCopyPassword,
+        showManualFallback: configured.showManualFallback,
+      },
     });
     token.status = "used";
     return connectInfo;
