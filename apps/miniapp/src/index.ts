@@ -1,5 +1,6 @@
 export {
   assertMiniappPagesAreRunnable,
+  assertMiniappUiAcceptance,
   createMiniappRouteDecision,
   customerRoutes,
   merchantProtectedRoutes,

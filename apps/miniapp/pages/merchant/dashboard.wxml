@@ -1,5 +1,8 @@
 <view class="page" data-phase="10">
   <view wx:if="{{state === 'forbidden'}}">无权访问商家页面，已返回 WiFi 首页</view>
+  <view wx:elif="{{state === 'loading'}}">{{loadingText}}</view>
+  <view wx:elif="{{state === 'empty'}}">{{emptyText}}</view>
+  <view wx:elif="{{state === 'error'}}">{{errorText}}</view>
   <view wx:elif="{{state === 'risk_frozen'}}">当前商户存在风控冻结，不能提现</view>
   <view wx:else>
     <view class="title">{{merchantName}}</view>

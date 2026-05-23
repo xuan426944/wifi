@@ -22,7 +22,8 @@
     "phase:10:check": "npm run test && npm run build",
     "phase:11:check": "npm run test && npm run build",
     "phase:12:check": "npm run test && npm run build",
-    "phase:13:check": "npm run test && npm run build"
+    "phase:13:check": "npm run test && npm run build",
+    "phase:14:check": "npm run test && npm run build"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

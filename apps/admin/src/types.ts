@@ -2,6 +2,8 @@ export type AdminRole = "super_admin" | "operator" | "finance" | "risk" | "custo
 
 export type PageStateKind = "loading" | "empty" | "ready" | "error" | "forbidden";
 
+export type TableControlKind = "search" | "reset" | "pagination" | "loading" | "empty" | "error" | "forbidden";
+
 export type FieldControl =
   | "input"
   | "password"
@@ -67,6 +69,7 @@ export interface AdminPageSpec {
   navGroup: string;
   permission: string;
   apiKey: string;
+  tableControls: TableControlKind[];
   searchFields: SearchFieldSpec[];
   tableColumns: TableColumnSpec[];
   formFields: FormFieldSpec[];
@@ -85,6 +88,7 @@ export interface AdminPageRuntime {
   visible: boolean;
   fields: string[];
   actions: AdminActionSpec[];
+  tableControls: TableControlKind[];
   emptyState: string;
   message: string;
 }

@@ -54,6 +54,7 @@ export const rolePermissions: Record<AdminRole, string[]> = {
     "revenue.read",
     "wallet.read",
     "withdraw.read",
+    "reconciliation.read",
     "risk.read",
     "ranking.read",
     "system_config.read",

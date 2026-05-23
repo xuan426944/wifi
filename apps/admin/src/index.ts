@@ -13,5 +13,6 @@ export type {
   FormFieldSpec,
   PageStateKind,
   SearchFieldSpec,
+  TableControlKind,
   TableColumnSpec,
 } from "./types";

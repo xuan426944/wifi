@@ -89,7 +89,7 @@ export const miniappPageCatalog: MiniappPageSpec[] = [
     },
     fields: ["门店名称", "WiFi 名称", "广告提示", "隐私协议入口", "商家申请/商家中心入口"],
     actions: ["一键连接 WiFi", "查看手动连接", "商家申请", "申请进度", "商家中心"],
-    states: ["loading", "ready", "wifi_missing", "ad_required", "error"],
+    states: ["loading", "ready", "empty", "error", "forbidden", "wifi_missing", "ad_required"],
     emptyState: "正在获取门店信息",
     apiBindings: [miniappApiBindings.authLogin, miniappApiBindings.storeLanding, miniappApiBindings.scanReport],
     complianceCopy: [
@@ -104,7 +104,7 @@ export const miniappPageCatalog: MiniappPageSpec[] = [
     primaryAction: "观看广告后继续连接",
     fields: ["门店名称", "广告加载状态", "倒计时", "广告完成状态"],
     actions: ["用户点击后拉起广告", "重试", "返回 WiFi 首页"],
-    states: ["loading", "ready", "error", "manual_fallback"],
+    states: ["loading", "ready", "empty", "error", "forbidden", "manual_fallback"],
     emptyState: "广告加载中",
     apiBindings: [miniappApiBindings.adStart, miniappApiBindings.adFinish, miniappApiBindings.wifiRewardToken],
     complianceCopy: [
@@ -119,7 +119,7 @@ export const miniappPageCatalog: MiniappPageSpec[] = [
     roleGate: "public_wifi_flow",
     fields: ["连接状态", "失败原因", "复制 WiFi 名称", "复制密码", "手动连接指引"],
     actions: ["重试连接", "复制 WiFi 名称", "复制密码", "打开系统设置", "返回首页"],
-    states: ["ready", "empty", "error", "manual_fallback"],
+    states: ["loading", "ready", "empty", "error", "forbidden", "manual_fallback"],
     emptyState: "暂无连接结果",
     apiBindings: [miniappApiBindings.wifiConnectResult],
     complianceCopy: ["连接失败后必须提供复制密码和手动连接指引"],
@@ -130,7 +130,7 @@ export const miniappPageCatalog: MiniappPageSpec[] = [
     roleGate: "public_wifi_flow",
     fields: ["SSID", "密码", "复制按钮", "系统设置步骤", "reward_token 状态"],
     actions: ["复制 WiFi 名称", "复制密码", "打开系统设置", "返回 WiFi 首页"],
-    states: ["ready", "empty", "forbidden", "manual_fallback"],
+    states: ["loading", "ready", "empty", "error", "forbidden", "manual_fallback"],
     emptyState: "请先完成广告授权",
     apiBindings: [miniappApiBindings.wifiConnectInfo],
     complianceCopy: ["没有有效 reward_token 时只展示后台允许的失败兜底"],
@@ -142,7 +142,7 @@ export const miniappPageCatalog: MiniappPageSpec[] = [
     primaryAction: "提交申请",
     fields: ["商户名称", "申请人姓名", "手机号", "门店名称", "城市", "地址", "行业", "可选 WiFi 信息", "商户协议勾选"],
     actions: ["提交申请", "查看商户协议", "返回 WiFi 首页"],
-    states: ["ready", "loading", "error"],
+    states: ["loading", "ready", "empty", "error", "forbidden"],
     emptyState: "请填写商家申请信息",
     apiBindings: [miniappApiBindings.merchantApplicationSubmit],
     complianceCopy: ["开发阶段可使用 mock/manual 手机号", "WiFi 信息可选，也可以审核通过后在后台配置", "真实微信手机号授权后置"],
@@ -153,7 +153,7 @@ export const miniappPageCatalog: MiniappPageSpec[] = [
     roleGate: "merchant_application_public",
     fields: ["申请单号", "审核状态", "驳回原因", "下一步指引"],
     actions: ["刷新进度", "取消申请", "返回 WiFi 首页"],
-    states: ["loading", "ready", "empty", "error"],
+    states: ["loading", "ready", "empty", "error", "forbidden"],
     emptyState: "暂无申请记录",
     apiBindings: [miniappApiBindings.merchantApplicationLatest, miniappApiBindings.merchantApplicationCancel],
     complianceCopy: ["未授权商户不能进入商家收益页面"],
@@ -164,7 +164,7 @@ export const miniappPageCatalog: MiniappPageSpec[] = [
     roleGate: "merchant_application_public",
     fields: ["收益预估说明", "广告合规提示", "提现门槛提示", "风控规则提示"],
     actions: ["同意并返回", "返回"],
-    states: ["ready"],
+    states: ["loading", "ready", "empty", "error", "forbidden"],
     emptyState: "暂无协议内容",
     apiBindings: [],
     complianceCopy: ["预估收益不等于可提现收益", "异常商户不能提现"],
@@ -189,7 +189,7 @@ export const miniappPageCatalog: MiniappPageSpec[] = [
       "门店选择器",
     ],
     actions: ["提现", "收益明细", "提现记录", "排行榜", "门店二维码", "切换门店"],
-    states: ["loading", "ready", "empty", "forbidden", "risk_frozen"],
+    states: ["loading", "ready", "empty", "error", "forbidden", "risk_frozen"],
     emptyState: "暂无商户数据",
     forbiddenRedirect: "pages/wifi/index",
     apiBindings: [miniappApiBindings.merchantDashboard],
@@ -295,4 +295,21 @@ export const assertMiniappPagesAreRunnable = () =>
       page.states.includes("ready") &&
       page.emptyState &&
       page.apiBindings.every((binding) => binding.mockSafe && binding.requiresRealConfig === false),
+  );
+
+export const phase14RequiredStates: MiniappPageState[] = ["loading", "ready", "empty", "error"];
+
+export const assertMiniappUiAcceptance = () =>
+  miniappPageCatalog.every((page) =>
+    phase14RequiredStates.every((state) => page.states.includes(state)),
+  ) &&
+  merchantProtectedRoutes.every((route) => {
+    const page = miniappPageCatalog.find((item) => item.route === route);
+    return page?.states.includes("forbidden") && page.forbiddenRedirect === "pages/wifi/index";
+  }) &&
+  miniappPageCatalog.some(
+    (page) =>
+      page.route === "pages/wifi/index" &&
+      page.primaryAction === "一键连接 WiFi" &&
+      page.weakEntry?.placement === "bottom_right",
   );

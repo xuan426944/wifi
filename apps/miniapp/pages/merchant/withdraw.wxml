@@ -1,5 +1,8 @@
 <view class="page" data-phase="10">
   <view wx:if="{{state === 'forbidden'}}">无权访问商家页面，已返回 WiFi 首页</view>
+  <view wx:elif="{{state === 'loading'}}">{{loadingText || '正在加载提现规则'}}</view>
+  <view wx:elif="{{state === 'empty'}}">{{emptyText || '当前暂无可提现金额'}}</view>
+  <view wx:elif="{{state === 'error'}}">{{errorText || '提现规则加载失败'}}</view>
   <view wx:elif="{{state === 'risk_frozen'}}">风控冻结期间不能提现</view>
   <view wx:else>
     <view class="title">提现</view>

@@ -8,6 +8,8 @@ Page({
       status: "全部状态",
     },
     list: [],
+    loadingText: "正在加载收益明细",
+    errorText: "收益明细加载失败",
   },
   onRefreshTap() {
     this.setData({

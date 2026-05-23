@@ -194,6 +194,29 @@
         color: var(--amber);
         font-size: 13px;
       }
+      .state-strip,
+      .pagination {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .state-strip {
+        margin-bottom: 14px;
+      }
+      .state-pill {
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: #ffffff;
+        padding: 6px 10px;
+      }
+      .pagination {
+        justify-content: flex-end;
+        padding: 12px 14px;
+        border-top: 1px solid var(--line);
+      }
       .status-row {
         display: grid;
         grid-template-columns: repeat(4, minmax(160px, 1fr));
@@ -225,7 +248,7 @@
     </style>
   </head>
   <body>
-    <div id="app" class="admin-shell" data-phase="09">
+    <div id="app" class="admin-shell" data-phase="09" data-ui-acceptance="14">
       <aside>
         <p class="brand">门店扫码WiFi广告平台后台</p>
         <div class="nav-group">运营</div>
@@ -258,11 +281,55 @@
           <div class="role">当前角色：超级管理员</div>
         </header>
         <main>
+          <section class="state-strip" aria-label="页面状态">
+            <span class="state-pill">加载：正在加载数据</span>
+            <span class="state-pill">空状态：暂无数据</span>
+            <span class="state-pill">错误：加载失败可重试</span>
+            <span class="state-pill">无权限：按钮与接口均按 RBAC 隐藏</span>
+            <span class="state-pill">分页：第 1 页 / 每页 20 条</span>
+          </section>
           <section class="metrics" aria-label="核心指标">
             <div class="metric"><span>今日扫码人数</span><strong>0</strong></div>
             <div class="metric"><span>今日广告完成</span><strong>0</strong></div>
             <div class="metric"><span>今日连接成功</span><strong>0</strong></div>
             <div class="metric"><span>待审核提现</span><strong>0</strong></div>
+          </section>
+
+          <section class="panel" id="applications">
+            <div class="panel-head">
+              <h2>商户申请审核</h2>
+              <div class="actions">
+                <button>查询</button>
+                <button>重置</button>
+                <button class="risk">审核通过</button>
+                <button class="risk">驳回</button>
+              </div>
+            </div>
+            <div class="search-row">
+              <div class="control">申请编号</div>
+              <div class="control">商户名称</div>
+              <div class="control">负责人手机号</div>
+              <div class="control">状态</div>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>申请编号</th>
+                  <th>商户名称</th>
+                  <th>门店名称</th>
+                  <th>负责人</th>
+                  <th>手机号</th>
+                  <th>状态</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="7" class="empty">暂无商户申请</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="pagination">共 0 条 / 第 1 页 / 每页 20 条</div>
           </section>
 
           <section class="panel" id="merchants">
@@ -299,6 +366,7 @@
                 </tr>
               </tbody>
             </table>
+            <div class="pagination">共 0 条 / 第 1 页 / 每页 20 条</div>
           </section>
 
           <section class="panel" id="wifi">
@@ -333,6 +401,7 @@
                 </tr>
               </tbody>
             </table>
+            <div class="pagination">共 0 条 / 第 1 页 / 每页 20 条</div>
           </section>
 
           <section class="panel" id="finance">
@@ -371,6 +440,43 @@
             <p class="notice">预估收益不等于可提现收益，以结算确认和风控审核后金额为准。</p>
           </section>
 
+          <section class="panel" id="reconciliation">
+            <div class="panel-head">
+              <h2>财务对账</h2>
+              <div class="actions">
+                <button>查询</button>
+                <button>重置</button>
+                <button>发起对账</button>
+                <button class="risk">人工处理</button>
+              </div>
+            </div>
+            <div class="search-row">
+              <div class="control">对账类型</div>
+              <div class="control">业务日期</div>
+              <div class="control">状态</div>
+              <div class="control">Mock 差异：金额不一致 / 重复回调</div>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>对账编号</th>
+                  <th>类型</th>
+                  <th>本地金额</th>
+                  <th>外部金额</th>
+                  <th>差异金额</th>
+                  <th>风险级别</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="6" class="empty">暂无对账记录</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="pagination">共 0 条 / 第 1 页 / 每页 20 条</div>
+            <p class="notice">Mock 模式可展示一致、远端失败、远端成功、本地失败、金额不一致、查单无记录和重复回调差异。</p>
+          </section>
+
           <section class="panel" id="risk">
             <div class="panel-head">
               <h2>排行榜 / 风控 / 审计</h2>
@@ -383,9 +489,10 @@
             <div class="status-row">
               <div class="status"><strong>排行榜配置</strong><br /><small>暂无排行榜配置变更</small></div>
               <div class="status"><strong>风控中心</strong><br /><small>暂无风控事件</small></div>
-              <div class="status"><strong>第三方配置状态</strong><br /><small>开发阶段全部 Mock/Adapter</small></div>
+              <div class="status"><strong>第三方配置状态</strong><br /><small>AppSecret/API v3/支付配置：已脱敏 ********；开发阶段全部 Mock/Adapter</small></div>
               <div class="status"><strong>操作日志</strong><br /><small>暂无操作日志</small></div>
             </div>
+            <p class="notice">高危操作均需二次确认并填写原因：修改分成、修改 WiFi 密码、禁用商户/门店、人工调账、提现审核、风控处理。</p>
           </section>
         </main>
       </section>

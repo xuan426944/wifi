@@ -4,12 +4,14 @@
     <view class="wifi-name">WiFi：{{wifiName || '待配置'}}</view>
     <view class="notice">{{adNotice || '观看广告后可获得本次 WiFi 连接授权。如广告暂不可用，可稍后重试或联系店员。'}}</view>
 
-    <button class="primary-action" bindtap="onPrimaryTap">{{primaryAction || '一键连接 WiFi'}}</button>
+    <button class="primary-action" disabled="{{state === 'wifi_missing' || state === 'loading'}}" bindtap="onPrimaryTap">{{primaryAction || '一键连接 WiFi'}}</button>
     <button class="secondary-action" bindtap="onManualTap">查看手动连接</button>
 
     <view wx:if="{{state === 'loading'}}" class="state-text">正在获取门店信息</view>
+    <view wx:if="{{state === 'empty'}}" class="state-text">{{emptyText}}</view>
     <view wx:if="{{state === 'wifi_missing'}}" class="state-text">{{missingWifiText || '门店 WiFi 暂未配置，请联系店员。'}}</view>
     <view wx:if="{{state === 'error'}}" class="state-text">网络开小差了，请重试或联系店员</view>
+    <view wx:if="{{state === 'forbidden'}}" class="state-text">{{forbiddenText}}</view>
   </view>
 
   <view class="privacy-link">{{privacyText}}</view>

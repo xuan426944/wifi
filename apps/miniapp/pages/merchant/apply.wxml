@@ -1,15 +1,21 @@
 <view class="page" data-phase="10">
   <view class="title">商家申请</view>
   <view>{{phoneTip}}</view>
+  <view wx:if="{{state === 'loading'}}">{{loadingText || '正在提交申请'}}</view>
+  <view wx:if="{{state === 'empty'}}">{{emptyText || '请填写商家申请信息'}}</view>
+  <view wx:if="{{state === 'error'}}">{{errorText || '申请提交失败，请检查必填项'}}</view>
+  <view wx:if="{{state === 'forbidden'}}">{{forbiddenText || '当前微信已绑定商户，请进入商家中心'}}</view>
   <input placeholder="商户名称" value="{{merchantName}}" />
   <input placeholder="申请人姓名" value="{{applicantName}}" />
   <input placeholder="手机号（mock/manual）" value="{{applicantPhone}}" />
   <input placeholder="门店名称" value="{{storeName}}" />
   <input placeholder="城市" value="{{city}}" />
+  <input placeholder="区县（选填）" value="{{district}}" />
   <input placeholder="地址" value="{{address}}" />
   <input placeholder="行业" value="{{industry}}" />
   <input placeholder="可选 WiFi 名称" value="{{wifiSsid}}" />
   <input password placeholder="可选 WiFi 密码，可审核通过后后台配置" value="{{wifiPassword}}" />
+  <textarea placeholder="备注（选填）" value="{{remark}}" />
   <checkbox checked="{{agreeMerchantTerms}}">我已阅读并同意商户协议</checkbox>
   <button bindtap="onAgreementTap">查看商户协议</button>
   <button bindtap="onSubmitTap">提交申请</button>

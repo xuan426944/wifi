@@ -1,4 +1,16 @@
-import { AdminActionSpec, AdminPageSpec, FieldControl } from "./types";
+import { AdminActionSpec, AdminPageSpec, FieldControl, TableControlKind } from "./types";
+
+type AdminPageBaseSpec = Omit<AdminPageSpec, "tableControls">;
+
+export const phase14TableControls: TableControlKind[] = [
+  "search",
+  "reset",
+  "pagination",
+  "loading",
+  "empty",
+  "error",
+  "forbidden",
+];
 
 const field = (key: string, label: string, control: FieldControl = "input", required = false) => ({
   key,
@@ -41,7 +53,13 @@ const highRiskAction = (key: string, label: string, permission: string, api?: st
     reasonRequired: true,
   });
 
-export const adminPages: AdminPageSpec[] = [
+const withPhase14Controls = (pages: AdminPageBaseSpec[]): AdminPageSpec[] =>
+  pages.map((page) => ({
+    ...page,
+    tableControls: [...phase14TableControls],
+  }));
+
+export const adminPages: AdminPageSpec[] = withPhase14Controls([
   {
     path: "/admin/dashboard",
     title: "数据总览",
@@ -679,6 +697,6 @@ export const adminPages: AdminPageSpec[] = [
     errorText: "操作日志加载失败",
     forbiddenText: "无权查看操作日志",
   },
-];
+]);
 
 export const getAdminPage = (path: string) => adminPages.find((page) => page.path === path);

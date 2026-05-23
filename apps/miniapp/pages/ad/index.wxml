@@ -1,6 +1,9 @@
 <view class="page" data-phase="10">
   <view class="title">{{storeName}}</view>
-  <view class="status">{{state === 'loading' ? loadText : completeText}}</view>
+  <view wx:if="{{state === 'empty'}}" class="status">{{emptyText}}</view>
+  <view wx:elif="{{state === 'error'}}" class="status">{{errorText}}</view>
+  <view wx:elif="{{state === 'forbidden'}}" class="status">{{forbiddenText}}</view>
+  <view wx:else class="status">{{state === 'loading' ? loadText : completeText}}</view>
   <view class="notice">必须用户点击触发广告，不能自动弹出；广告完成以后才继续获取 WiFi 授权。</view>
   <view class="notice">广告未完整观看，暂不能获取自动连接授权。</view>
   <view class="notice">当前广告暂不可用，请稍后重试。</view>

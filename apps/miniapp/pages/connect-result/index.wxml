@@ -1,5 +1,9 @@
 <view class="page" data-phase="10">
-  <view wx:if="{{status === 'success'}}">
+  <view wx:if="{{state === 'loading'}}">{{loadingText}}</view>
+  <view wx:elif="{{state === 'empty'}}">{{emptyText}}</view>
+  <view wx:elif="{{state === 'error'}}">{{errorText}}</view>
+  <view wx:elif="{{state === 'forbidden'}}">{{forbiddenText}}</view>
+  <view wx:elif="{{status === 'success'}}">
     <view class="title">{{successText}}</view>
     <button bindtap="onBackTap">返回</button>
   </view>

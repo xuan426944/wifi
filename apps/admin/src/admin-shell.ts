@@ -42,6 +42,7 @@ export const createAdminShell = (
       visible,
       fields: page.tableColumns.map((column) => column.label),
       actions: page.actions.filter((item) => hasPermission(role, item.permission)),
+      tableControls: page.tableControls,
       emptyState: page.emptyState,
       message: messageForState(visible ? state : "forbidden", page),
     },
@@ -64,6 +65,16 @@ export const assertAdminPagesAreRunnable = () => {
     .map(({ page, action }) => `${page}:${action.key}`);
   if (unsafeHighRisk.length > 0) {
     throw new Error(`High-risk actions without confirmation: ${unsafeHighRisk.join(", ")}`);
+  }
+  const missingTableControls = adminPages
+    .filter((page) =>
+      ["search", "reset", "pagination", "loading", "empty", "error", "forbidden"].some(
+        (control) => !page.tableControls.includes(control as (typeof page.tableControls)[number]),
+      ),
+    )
+    .map((page) => page.path);
+  if (missingTableControls.length > 0) {
+    throw new Error(`Admin pages missing Phase 14 table controls: ${missingTableControls.join(", ")}`);
   }
   return true;
 };

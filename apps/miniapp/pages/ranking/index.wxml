@@ -1,5 +1,7 @@
 <view class="page" data-phase="10">
   <view wx:if="{{state === 'forbidden'}}">无权访问商家页面，已返回 WiFi 首页</view>
+  <view wx:elif="{{state === 'loading'}}">{{loadingText}}</view>
+  <view wx:elif="{{state === 'error'}}">{{errorText}}</view>
   <view wx:else>
     <view class="title">商家排行榜</view>
     <view>榜单类型：{{rankingType}}</view>

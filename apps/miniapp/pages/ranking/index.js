@@ -6,6 +6,8 @@ Page({
     displayModeTip: "排行榜按后台配置展示 exact/range/heat/hidden。",
     riskTip: "异常门店按后台规则隐藏，新店参与规则由后台决定。",
     list: [],
+    loadingText: "正在加载排行榜",
+    errorText: "排行榜加载失败",
   },
   onRefreshTap() {
     this.setData({

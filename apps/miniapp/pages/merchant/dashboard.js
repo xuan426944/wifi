@@ -16,6 +16,9 @@ Page({
     currentRank: "暂无排名",
     shareRateText: "50%",
     notice: "预估收益不等于可提现收益，以结算确认和风控审核后金额为准",
+    loadingText: "正在加载商家中心",
+    emptyText: "暂无商户数据",
+    errorText: "商家中心加载失败",
   },
   onWithdrawTap() {
     wx.navigateTo({ url: "/pages/merchant/withdraw" });

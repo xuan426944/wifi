@@ -6,6 +6,7 @@ export interface AdminPageSpec {
   permission: string;
   fields: string[];
   actions: string[];
+  tableControls: string[];
   emptyState: string;
   highRiskActions?: string[];
 }
@@ -16,6 +17,7 @@ export const adminPageCatalog: AdminPageSpec[] = adminPages.map((page) => ({
   permission: page.permission,
   fields: page.tableColumns.map((column) => column.label),
   actions: page.actions.map((action) => action.label),
+  tableControls: page.tableControls,
   highRiskActions: page.actions.filter((action) => action.highRisk).map((action) => action.label),
   emptyState: page.emptyState,
 }));
