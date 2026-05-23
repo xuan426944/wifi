@@ -19,6 +19,7 @@ import { OperationLogService } from "../operation-log/operation-log.service";
 import { RequirePermission } from "../rbac/decorators";
 import { AdminPermissionGuard } from "../rbac/admin-permission.guard";
 import { RevenueService } from "../revenue/revenue.service";
+import { WithdrawService } from "../withdraw/withdraw.service";
 
 const WIFI_SECURITY_TYPES = ["none", "WEP", "WPA", "WPA2", "WPA3"] as const;
 const WIFI_CONNECT_MODES = ["mock", "wechat", "manual"] as const;
@@ -36,6 +37,7 @@ export class AdminController {
     @Inject(OperationLogService) private readonly operationLogs: OperationLogService,
     @Inject(InMemoryStore) private readonly memoryStore: InMemoryStore,
     @Inject(RevenueService) private readonly revenues: RevenueService,
+    @Inject(WithdrawService) private readonly withdrawsService: WithdrawService,
   ) {}
 
   @Get("dashboard")
@@ -60,7 +62,9 @@ export class AdminController {
       todayPlatformRevenueCent: allRevenueSummary.platform,
       monthSettlementIncomeCent: allRevenueSummary.confirmed,
       monthWithdrawCent: 0,
-      pendingWithdrawCount: 0,
+      pendingWithdrawCount: this.memoryStore.withdrawRecords.filter((record) =>
+        ["frozen", "reviewing", "transfer_processing"].includes(record.status),
+      ).length,
       abnormalRiskEventCount: 0,
       activeStoreCount: this.storesRepo.list().filter((store) => store.status === "active").length,
       emptyState: true,
@@ -453,34 +457,51 @@ export class AdminController {
 
   @Get("withdraws")
   @RequirePermission("withdraw.read")
-  withdraws() {
-    return ok(emptyPage());
+  withdraws(@Query("page") page = "1", @Query("pageSize") pageSize = "20", @Query("status") status?: string) {
+    const list = this.withdrawsService.list({ status });
+    return ok({ ...emptyPage(Number(page), Number(pageSize)), list, total: list.length });
   }
 
   @Post("withdraws/:id/review")
   @RequirePermission("withdraw.review")
-  reviewWithdraw(@Param("id") id: string) {
-    return ok({ id: Number(id), status: "reviewing" });
+  reviewWithdraw(@Req() request: any, @Param("id") id: string, @Body() body: { reason?: string }) {
+    const result = this.withdrawsService.review(Number(id), body.reason);
+    this.log(request, "withdraw.review", "withdraw", id, { status: result.status, reason: body.reason });
+    return ok(result);
   }
 
   @Post("withdraws/:id/approve")
   @RequirePermission("withdraw.review")
-  approveWithdraw(@Req() request: any, @Param("id") id: string) {
-    this.log(request, "withdraw.approve", "withdraw", id, { transferProvider: "mock" });
-    return ok({ id: Number(id), status: "transfer_processing" });
+  async approveWithdraw(@Req() request: any, @Param("id") id: string, @Body() body: { reason?: string; confirm?: boolean }) {
+    this.assertConfirm(body.confirm, body.reason, "审核通过必须填写原因并二次确认");
+    const result = await this.withdrawsService.approve(Number(id), body.reason);
+    this.log(request, "withdraw.approve", "withdraw", id, {
+      status: result.status,
+      outBillNo: result.outBillNo,
+      transferProvider: "mock",
+    });
+    return ok(result);
   }
 
   @Post("withdraws/:id/reject")
   @RequirePermission("withdraw.review")
-  rejectWithdraw(@Req() request: any, @Param("id") id: string) {
-    this.log(request, "withdraw.reject", "withdraw", id, { ledgerType: "withdraw_failed_unfreeze" });
-    return ok({ id: Number(id), status: "rejected" });
+  rejectWithdraw(@Req() request: any, @Param("id") id: string, @Body() body: { reason?: string; confirm?: boolean }) {
+    this.assertConfirm(body.confirm, body.reason, "审核拒绝必须填写原因并二次确认");
+    const result = this.withdrawsService.reject(Number(id), body.reason ?? "rejected");
+    this.log(request, "withdraw.reject", "withdraw", id, { ledgerType: "withdraw_failed_unfreeze", reason: body.reason });
+    return ok(result);
   }
 
   @Post("withdraws/:id/query-transfer")
   @RequirePermission("withdraw.review")
-  queryTransfer(@Param("id") id: string) {
-    return ok({ id: Number(id), remoteStatus: "mock_pending" });
+  async queryTransfer(@Req() request: any, @Param("id") id: string) {
+    const result = await this.withdrawsService.queryTransfer(Number(id));
+    this.log(request, "withdraw.query_transfer", "withdraw", id, {
+      remoteStatus: result.remoteStatus,
+      localStatus: result.status,
+      outBillNo: result.outBillNo,
+    });
+    return ok(result);
   }
 
   @Get("ranking/config")

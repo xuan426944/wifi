@@ -1,4 +1,4 @@
-import { Controller, Get, Inject, Post, Query, Req, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Inject, Post, Query, Req, UseGuards } from "@nestjs/common";
 import { emptyPage, ok } from "../common/api-response";
 import { InMemoryStore } from "../database/in-memory-store";
 import {
@@ -12,6 +12,7 @@ import {
 import { MerchantRoute } from "../rbac/decorators";
 import { MerchantGuard } from "../rbac/merchant.guard";
 import { RevenueService } from "../revenue/revenue.service";
+import { WithdrawService } from "../withdraw/withdraw.service";
 
 @Controller("merchant")
 @UseGuards(MerchantGuard)
@@ -23,6 +24,7 @@ export class MerchantController {
     @Inject(WALLET_REPOSITORY) private readonly wallets: WalletRepository,
     @Inject(RevenueService) private readonly revenues: RevenueService,
     @Inject(InMemoryStore) private readonly memoryStore: InMemoryStore,
+    @Inject(WithdrawService) private readonly withdrawsService: WithdrawService,
   ) {}
 
   @Get("dashboard")
@@ -67,16 +69,20 @@ export class MerchantController {
   }
 
   @Post("withdraw/apply")
-  withdrawApply() {
-    return ok({
-      withdrawNo: null,
-      status: "empty_phase_01",
-      notice: "Phase 01 仅初始化提现接口骨架，余额变动必须在 wallet_ledger 中完成",
-    });
+  withdrawApply(@Req() request: any, @Body() body: { amountCent: number }) {
+    return ok(
+      this.withdrawsService.apply({
+        merchantId: request.principal.roleContext.merchantId,
+        openid: request.principal.openid,
+        amountCent: body.amountCent,
+      }),
+    );
   }
 
   @Get("withdraws")
-  withdraws(@Query("page") page = "1", @Query("pageSize") pageSize = "20") {
-    return ok(emptyPage(Number(page), Number(pageSize)));
+  withdraws(@Req() request: any, @Query("page") page = "1", @Query("pageSize") pageSize = "20") {
+    const merchantId = request.principal.roleContext.merchantId;
+    const list = merchantId ? this.withdrawsService.list({ merchantId }) : [];
+    return ok({ ...emptyPage(Number(page), Number(pageSize)), list, total: list.length });
   }
 }

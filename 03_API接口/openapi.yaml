@@ -225,7 +225,7 @@ paths:
       responses: { '200': { description: 分页收益明细 } }
   /merchant/withdraw/apply:
     post:
-      summary: 商户申请提现
+      summary: 商户申请提现，创建提现单并通过 wallet_ledger 冻结余额
       requestBody:
         content:
           application/json:
@@ -234,7 +234,7 @@ paths:
               required: [amountCent]
               properties:
                 amountCent: { type: integer }
-      responses: { '200': { description: 返回 withdrawNo、status } }
+      responses: { '200': { description: 返回 withdrawNo、status=frozen } }
   /merchant/withdraws:
     get:
       summary: 商户提现记录
@@ -404,11 +404,11 @@ paths:
   /admin/withdraws/{id}/review:
     post: { summary: 提现进入审核/审核备注, parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ], responses: { '200': { description: ok } } }
   /admin/withdraws/{id}/approve:
-    post: { summary: 提现审核通过并发起转账, parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ], responses: { '200': { description: ok } } }
+    post: { summary: 提现审核通过并发起 Mock/真实转账，不能直接标记 paid, parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ], responses: { '200': { description: ok } } }
   /admin/withdraws/{id}/reject:
     post: { summary: 提现审核拒绝并解冻, parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ], responses: { '200': { description: ok } } }
   /admin/withdraws/{id}/query-transfer:
-    post: { summary: 提现查单, parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ], responses: { '200': { description: remote status } } }
+    post: { summary: 提现查单，Mock paid 后写 withdraw_paid 流水, parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ], responses: { '200': { description: remote status } } }
   /admin/ranking/config:
     get: { summary: 排行榜配置, responses: { '200': { description: config } } }
     post: { summary: 保存排行榜配置, responses: { '200': { description: ok } } }

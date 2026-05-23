@@ -50,6 +50,7 @@ import { RevenueService } from "./revenue/revenue.service";
 import { StoreController } from "./store/store.controller";
 import { WifiController } from "./wifi/wifi.controller";
 import { WifiService } from "./wifi/wifi.service";
+import { WithdrawService } from "./withdraw/withdraw.service";
 import { join } from "node:path";
 
 @Module({
@@ -70,6 +71,7 @@ import { join } from "node:path";
     AdService,
     WifiService,
     RevenueService,
+    WithdrawService,
     MigrationService,
     OperationLogService,
     AdminPermissionGuard,

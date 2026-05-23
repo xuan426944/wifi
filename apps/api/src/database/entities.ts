@@ -14,6 +14,16 @@ export type WalletLedgerType =
   | "reversal";
 export type RevenueStatus = "estimated" | "pending_settlement" | "confirmed" | "withdrawable" | "frozen" | "invalid";
 export type ShareRuleSource = "store" | "merchant" | "campaign" | "global";
+export type WithdrawStatus =
+  | "created"
+  | "frozen"
+  | "reviewing"
+  | "transfer_processing"
+  | "paid"
+  | "failed"
+  | "rejected"
+  | "canceled"
+  | "abnormal";
 
 export interface UserEntity {
   id: number;
@@ -134,6 +144,23 @@ export interface RevenueRecordEntity {
   invalidReason?: string;
   createdAt: string;
   confirmedAt?: string;
+}
+
+export interface WithdrawRecordEntity {
+  id: number;
+  withdrawNo: string;
+  merchantId: number;
+  openid: string;
+  amountCent: number;
+  status: WithdrawStatus;
+  outBillNo?: string;
+  wechatBillNo?: string;
+  failReason?: string;
+  reviewReason?: string;
+  appliedAt: string;
+  frozenAt?: string;
+  paidAt?: string;
+  updatedAt: string;
 }
 
 export const PHASE_01_REQUIRED_TABLES = [

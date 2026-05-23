@@ -9,6 +9,7 @@ import {
   StoreWifiEntity,
   UserEntity,
   WalletLedgerEntity,
+  WithdrawRecordEntity,
 } from "./entities";
 
 export interface AdViewRecord {
@@ -63,6 +64,7 @@ export class InMemoryStore {
   private adViewLogSeq = 0;
   private revenueSeq = 0;
   private ledgerSeq = 0;
+  private withdrawSeq = 0;
 
   readonly users: UserEntity[] = [
     { id: 1, openid: "mock_customer", userType: "customer", status: "active" },
@@ -248,6 +250,7 @@ export class InMemoryStore {
   readonly wifiConnectLogs: WifiConnectLogRecord[] = [];
   readonly revenueRecords: RevenueRecordEntity[] = [];
   readonly walletLedger: WalletLedgerEntity[] = [];
+  readonly withdrawRecords: WithdrawRecordEntity[] = [];
 
   findMerchantOwner(openid: string) {
     const owner = this.merchantOwners.find((item) => item.openid === openid && item.status === "active");
@@ -306,5 +309,10 @@ export class InMemoryStore {
   nextLedgerId() {
     this.ledgerSeq += 1;
     return this.ledgerSeq;
+  }
+
+  nextWithdrawId() {
+    this.withdrawSeq += 1;
+    return this.withdrawSeq;
   }
 }
