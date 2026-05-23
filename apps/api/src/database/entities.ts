@@ -47,6 +47,17 @@ export type RiskHandleAction =
   | "disable_merchant"
   | "recover"
   | "remark";
+export type MerchantApplicationStatus = "draft" | "submitted" | "reviewing" | "approved" | "rejected" | "canceled";
+export type ReconciliationType = "withdraw" | "wallet_ledger" | "revenue_settlement";
+export type ReconciliationScenario =
+  | "matched"
+  | "local_paid_remote_failed"
+  | "local_processing_remote_paid"
+  | "local_failed_remote_paid"
+  | "amount_mismatch"
+  | "missing_remote"
+  | "duplicate_callback";
+export type ReconciliationSeverity = "info" | "warning" | "high" | "critical";
 
 export interface UserEntity {
   id: number;
@@ -110,6 +121,47 @@ export interface StoreWifiEntity {
   remark?: string;
   createdAt?: string;
   updatedAt: string;
+}
+
+export interface MerchantApplicationEntity {
+  id: number;
+  applicationNo: string;
+  userId: number;
+  openid: string;
+  sourceStoreId?: number;
+  merchantName: string;
+  applicantName: string;
+  applicantPhone: string;
+  storeName: string;
+  city: string;
+  district?: string;
+  address: string;
+  industry: string;
+  wifiSsid?: string;
+  wifiPasswordCipher?: string;
+  wifiPasswordMasked?: string;
+  remark?: string;
+  status: MerchantApplicationStatus;
+  rejectReason?: string;
+  allowResubmit: boolean;
+  createdMerchantId?: number;
+  createdStoreId?: number;
+  reviewedBy?: string;
+  reviewedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MerchantApplicationLogEntity {
+  id: number;
+  applicationId: number;
+  applicationNo: string;
+  action: string;
+  actorType: "user" | "admin" | "system";
+  actorId?: string;
+  before?: Record<string, unknown>;
+  after?: Record<string, unknown>;
+  createdAt: string;
 }
 
 export interface QrcodeEntity {
@@ -227,6 +279,28 @@ export interface RiskEventEntity {
   createdAt: string;
   updatedAt: string;
   handledAt?: string;
+}
+
+export interface ReconciliationLogEntity {
+  id: number;
+  reconcileNo: string;
+  type: ReconciliationType;
+  bizDate: string;
+  scenario: ReconciliationScenario;
+  localStatus: string;
+  remoteStatus: string;
+  amountCent: number;
+  localAmountCent: number;
+  remoteAmountCent: number;
+  diffAmountCent: number;
+  result: "matched" | "different" | "abnormal";
+  status: "mock_completed" | "pending_manual_review" | "fixed";
+  severity: ReconciliationSeverity;
+  requiresManualReview: boolean;
+  detail: string;
+  handledBy?: string;
+  handledAt?: string;
+  createdAt: string;
 }
 
 export const PHASE_01_REQUIRED_TABLES = [

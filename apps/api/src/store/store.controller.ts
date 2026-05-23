@@ -34,10 +34,15 @@ export class StoreController {
       wifiName: wifi?.ssid ?? null,
       status: wifi ? "wifi_ready" : "wifi_missing",
       adRequired: Boolean(wifi),
+      adRequiredText: wifi
+        ? "观看广告后可获得本次 WiFi 连接授权。如广告暂不可用，可稍后重试或联系店员。"
+        : null,
       wifiConfigured: Boolean(wifi),
       missingWifiText: wifi ? null : "门店 WiFi 暂未配置，请联系店员",
+      missingWifiComplianceText: wifi ? null : "门店 WiFi 暂未配置，请联系店员。",
       connectButtonEnabled: Boolean(wifi),
       merchantEntryPlacement: "bottom_right",
+      merchantEntryText: "商家申请",
     });
   }
 

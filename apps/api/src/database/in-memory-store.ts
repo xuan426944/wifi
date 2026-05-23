@@ -1,6 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import {
   MerchantEntity,
+  MerchantApplicationEntity,
+  MerchantApplicationLogEntity,
   MerchantOwnerEntity,
   MerchantWalletEntity,
   QrcodeEntity,
@@ -8,6 +10,7 @@ import {
   RankingSnapshotEntity,
   RevenueRecordEntity,
   RiskEventEntity,
+  ReconciliationLogEntity,
   StoreEntity,
   StoreWifiEntity,
   UserEntity,
@@ -70,6 +73,9 @@ export class InMemoryStore {
   private withdrawSeq = 0;
   private rankingSnapshotSeq = 0;
   private riskEventSeq = 0;
+  private merchantApplicationSeq = 0;
+  private merchantApplicationLogSeq = 0;
+  private reconciliationSeq = 0;
 
   readonly users: UserEntity[] = [
     { id: 1, openid: "mock_customer", userType: "customer", status: "active" },
@@ -258,6 +264,9 @@ export class InMemoryStore {
   readonly withdrawRecords: WithdrawRecordEntity[] = [];
   readonly rankingSnapshots: RankingSnapshotEntity[] = [];
   readonly riskEvents: RiskEventEntity[] = [];
+  readonly merchantApplications: MerchantApplicationEntity[] = [];
+  readonly merchantApplicationLogs: MerchantApplicationLogEntity[] = [];
+  readonly reconciliationLogs: ReconciliationLogEntity[] = [];
   rankingConfig: RankingConfigEntity = {
     enabled: true,
     enabledTypes: [
@@ -355,5 +364,20 @@ export class InMemoryStore {
   nextRiskEventId() {
     this.riskEventSeq += 1;
     return this.riskEventSeq;
+  }
+
+  nextMerchantApplicationId() {
+    this.merchantApplicationSeq += 1;
+    return this.merchantApplicationSeq;
+  }
+
+  nextMerchantApplicationLogId() {
+    this.merchantApplicationLogSeq += 1;
+    return this.merchantApplicationLogSeq;
+  }
+
+  nextReconciliationId() {
+    this.reconciliationSeq += 1;
+    return this.reconciliationSeq;
   }
 }

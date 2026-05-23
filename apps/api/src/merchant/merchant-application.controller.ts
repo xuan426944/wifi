@@ -1,31 +1,24 @@
-import { Body, Controller, Get, Param, Post, Req } from "@nestjs/common";
+import { Body, Controller, Get, Inject, Param, Post, Req } from "@nestjs/common";
 import { ok } from "../common/api-response";
+import { SubmitMerchantApplicationDto } from "../database/dtos";
+import { MerchantApplicationService } from "./merchant-application.service";
 
 @Controller("merchant/applications")
 export class MerchantApplicationController {
+  constructor(@Inject(MerchantApplicationService) private readonly applications: MerchantApplicationService) {}
+
   @Post()
-  submit(@Req() request: any, @Body() body: { applicantName: string; applicantPhone: string; agreeMerchantTerms: boolean }) {
-    return ok({
-      applicationNo: `MA${Date.now()}`,
-      status: body.agreeMerchantTerms ? "submitted" : "draft",
-      applicantName: body.applicantName,
-      applicantPhoneMasked: body.applicantPhone?.replace(/(\d{3})\d{4}(\d+)/, "$1****$2"),
-      openid: request.principal.openid,
-      wifiOptional: true,
-    });
+  submit(@Req() request: any, @Body() body: SubmitMerchantApplicationDto) {
+    return ok(this.applications.submit(request.principal.openid, body));
   }
 
   @Get("my/latest")
   latest(@Req() request: any) {
-    return ok({
-      openid: request.principal.openid,
-      hasActiveMerchant: request.principal.roleContext.canViewMerchantPages,
-      latestApplicationStatus: null,
-    });
+    return ok(this.applications.latest(request.principal.openid, request.principal.roleContext.canViewMerchantPages));
   }
 
   @Post(":applicationNo/cancel")
-  cancel(@Param("applicationNo") applicationNo: string) {
-    return ok({ applicationNo, status: "canceled" });
+  cancel(@Req() request: any, @Param("applicationNo") applicationNo: string) {
+    return ok(this.applications.cancel(request.principal.openid, applicationNo));
   }
 }

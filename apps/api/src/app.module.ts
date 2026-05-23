@@ -26,6 +26,7 @@ import {
   WIFI_CONFIG_REPOSITORY,
 } from "./database/repositories";
 import { MerchantApplicationController } from "./merchant/merchant-application.controller";
+import { MerchantApplicationService } from "./merchant/merchant-application.service";
 import { MerchantController } from "./merchant/merchant.controller";
 import { RankingController } from "./merchant/ranking.controller";
 import { OperationLogService } from "./operation-log/operation-log.service";
@@ -48,6 +49,7 @@ import { AdminPermissionGuard } from "./rbac/admin-permission.guard";
 import { AuthGuard } from "./rbac/auth.guard";
 import { MerchantGuard } from "./rbac/merchant.guard";
 import { RankingService } from "./ranking/ranking.service";
+import { ReconciliationService } from "./reconciliation/reconciliation.service";
 import { RevenueService } from "./revenue/revenue.service";
 import { RiskService } from "./risk/risk.service";
 import { StoreController } from "./store/store.controller";
@@ -78,6 +80,8 @@ import { join } from "node:path";
     RankingService,
     RiskService,
     ConfigCenterService,
+    MerchantApplicationService,
+    ReconciliationService,
     MigrationService,
     OperationLogService,
     AdminPermissionGuard,

@@ -2,7 +2,15 @@ import { Body, Controller, Get, Inject, Param, Post, Put, Query, Req, UseGuards 
 import { emptyPage, ok } from "../common/api-response";
 import { ApiException, ERROR_CODES } from "../common/errors";
 import { ConfigCenterService } from "../config/config-center.service";
-import { CreateMerchantDto, CreateStoreDto, SaveWifiConfigDto, UpdateShareRateDto, UpdateStoreDto } from "../database/dtos";
+import {
+  ApproveMerchantApplicationDto,
+  CreateMerchantDto,
+  CreateStoreDto,
+  RejectMerchantApplicationDto,
+  SaveWifiConfigDto,
+  UpdateShareRateDto,
+  UpdateStoreDto,
+} from "../database/dtos";
 import { RankingConfigEntity } from "../database/entities";
 import { InMemoryStore } from "../database/in-memory-store";
 import {
@@ -17,8 +25,10 @@ import {
   WalletRepository,
   WifiConfigRepository,
 } from "../database/repositories";
+import { MerchantApplicationService } from "../merchant/merchant-application.service";
 import { OperationLogService } from "../operation-log/operation-log.service";
 import { RankingService } from "../ranking/ranking.service";
+import { ReconciliationService } from "../reconciliation/reconciliation.service";
 import { RequirePermission } from "../rbac/decorators";
 import { AdminPermissionGuard } from "../rbac/admin-permission.guard";
 import { RevenueService } from "../revenue/revenue.service";
@@ -45,6 +55,8 @@ export class AdminController {
     @Inject(RankingService) private readonly rankings: RankingService,
     @Inject(RiskService) private readonly risks: RiskService,
     @Inject(ConfigCenterService) private readonly configCenter: ConfigCenterService,
+    @Inject(MerchantApplicationService) private readonly merchantApplicationsService: MerchantApplicationService,
+    @Inject(ReconciliationService) private readonly reconciliations: ReconciliationService,
   ) {}
 
   @Get("dashboard")
@@ -93,33 +105,50 @@ export class AdminController {
 
   @Get("merchant-applications")
   @RequirePermission("merchant.audit")
-  merchantApplications() {
-    return ok(emptyPage());
+  merchantApplications(@Query("status") status?: string, @Query("keyword") keyword?: string) {
+    const list = this.merchantApplicationsService.list({ status, keyword });
+    return ok({ ...emptyPage(), list, total: list.length });
   }
 
   @Get("merchant-applications/:applicationNo")
   @RequirePermission("merchant.audit")
   merchantApplicationDetail(@Param("applicationNo") applicationNo: string) {
-    return ok({ applicationNo, status: "empty_phase_01" });
+    return ok(this.merchantApplicationsService.detail(applicationNo));
   }
 
   @Post("merchant-applications/:applicationNo/approve")
   @RequirePermission("merchant.audit")
-  approveMerchantApplication(@Req() request: any, @Param("applicationNo") applicationNo: string) {
+  approveMerchantApplication(
+    @Req() request: any,
+    @Param("applicationNo") applicationNo: string,
+    @Body() body: ApproveMerchantApplicationDto,
+  ) {
+    const result = this.merchantApplicationsService.approve(applicationNo, body, request.adminRole);
     this.log(request, "merchant_application.approve", "merchant_application", applicationNo, {
       createMerchant: true,
       createStore: true,
       bindOwner: true,
       createWifiIfProvided: true,
+      createdMerchantId: result.createdMerchantId,
+      createdStoreId: result.createdStoreId,
+      wifiCreated: result.wifiCreated,
     });
-    return ok({ applicationNo, status: "approved" });
+    return ok(result);
   }
 
   @Post("merchant-applications/:applicationNo/reject")
   @RequirePermission("merchant.audit")
-  rejectMerchantApplication(@Req() request: any, @Param("applicationNo") applicationNo: string) {
-    this.log(request, "merchant_application.reject", "merchant_application", applicationNo, { allowResubmit: true });
-    return ok({ applicationNo, status: "rejected" });
+  rejectMerchantApplication(
+    @Req() request: any,
+    @Param("applicationNo") applicationNo: string,
+    @Body() body: RejectMerchantApplicationDto,
+  ) {
+    const result = this.merchantApplicationsService.reject(applicationNo, body, request.adminRole);
+    this.log(request, "merchant_application.reject", "merchant_application", applicationNo, {
+      allowResubmit: result.allowResubmit,
+      rejectReason: result.rejectReason,
+    });
+    return ok(result);
   }
 
   @Post("merchants")
@@ -514,39 +543,25 @@ export class AdminController {
   @Get("reconciliation")
   @RequirePermission("reconciliation.read")
   reconciliation(@Query("page") page = "1", @Query("pageSize") pageSize = "20") {
-    return ok({
-      ...emptyPage(Number(page), Number(pageSize)),
-      tabs: ["withdraw", "wallet_ledger", "revenue_settlement", "differences"],
-      mockDifferenceSupported: true,
-      emptyText: "暂无对账记录",
-    });
+    return ok(this.reconciliations.list({ page: Number(page), pageSize: Number(pageSize) }));
   }
 
   @Post("reconciliation/run")
   @RequirePermission("reconciliation.handle")
   runReconciliation(
     @Req() request: any,
-    @Body() body: { type?: string; bizDate?: string; remark?: string; confirm?: boolean } = {},
+    @Body() body: { type?: string; bizDate?: string; scenario?: string; remark?: string; confirm?: boolean } = {},
   ) {
-    const type = body.type ?? "withdraw";
-    if (!["withdraw", "wallet_ledger", "revenue_settlement"].includes(type)) {
-      throw new ApiException(ERROR_CODES.PARAM_INVALID, "对账类型不合法", 400);
-    }
-    this.log(request, "reconciliation.run", "reconciliation", type, {
-      type,
+    const result = this.reconciliations.run(body);
+    this.log(request, "reconciliation.run", "reconciliation", result.reconcileNo, {
+      type: result.type,
       bizDate: body.bizDate ?? new Date().toISOString().slice(0, 10),
       mockDifferenceSupported: true,
       remark: body.remark,
+      scenario: body.scenario ?? result.scenario,
+      abnormalCount: result.abnormalCount,
     });
-    return ok({
-      reconcileNo: `RC${Date.now()}`,
-      type,
-      status: "mock_completed",
-      localAmountCent: 0,
-      remoteAmountCent: 0,
-      diffAmountCent: 0,
-      mockDifferenceSupported: true,
-    });
+    return ok(result);
   }
 
   @Get("ranking/config")

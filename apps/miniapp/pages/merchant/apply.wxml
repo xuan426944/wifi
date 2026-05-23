@@ -2,10 +2,14 @@
   <view class="title">商家申请</view>
   <view>{{phoneTip}}</view>
   <input placeholder="商户名称" value="{{merchantName}}" />
-  <input placeholder="联系人" value="{{applicantName}}" />
+  <input placeholder="申请人姓名" value="{{applicantName}}" />
   <input placeholder="手机号（mock/manual）" value="{{applicantPhone}}" />
   <input placeholder="门店名称" value="{{storeName}}" />
+  <input placeholder="城市" value="{{city}}" />
+  <input placeholder="地址" value="{{address}}" />
+  <input placeholder="行业" value="{{industry}}" />
   <input placeholder="可选 WiFi 名称" value="{{wifiSsid}}" />
+  <input password placeholder="可选 WiFi 密码，可审核通过后后台配置" value="{{wifiPassword}}" />
   <checkbox checked="{{agreeMerchantTerms}}">我已阅读并同意商户协议</checkbox>
   <button bindtap="onAgreementTap">查看商户协议</button>
   <button bindtap="onSubmitTap">提交申请</button>

@@ -37,7 +37,8 @@ export class AdService {
     });
     return {
       ...view,
-      complianceNotice: "请在用户主动点击后展示广告，完整观看后才可连接 WiFi",
+      complianceNotice: "广告必须由用户主动点击触发。完整观看广告后，可获取本店 WiFi 连接授权。",
+      noFillText: "当前广告暂不可用，请稍后重试。",
       rewardTokenIssued: false,
     };
   }
@@ -68,7 +69,7 @@ export class AdService {
       return {
         ...result,
         rewardToken: null,
-        adComplianceText: "广告未完整观看，不能发放 WiFi 授权",
+        adComplianceText: "广告未完整观看，暂不能获取自动连接授权。",
       };
     }
     const configured = this.wifiConfigs.findPrimaryByStoreId(record.storeId);
@@ -92,6 +93,7 @@ export class AdService {
       wifiConfigured: true,
       revenueNo: revenue?.revenueNo,
       estimatedMerchantAmountCent: revenue?.merchantAmountCent,
+      adComplianceText: "已完成观看，正在为你连接 WiFi。",
       revenueEstimateNotice: "预估收益不等于可提现收益，以结算确认和风控审核后金额为准",
     };
   }

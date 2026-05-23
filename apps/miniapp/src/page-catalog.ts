@@ -92,7 +92,10 @@ export const miniappPageCatalog: MiniappPageSpec[] = [
     states: ["loading", "ready", "wifi_missing", "ad_required", "error"],
     emptyState: "正在获取门店信息",
     apiBindings: [miniappApiBindings.authLogin, miniappApiBindings.storeLanding, miniappApiBindings.scanReport],
-    complianceCopy: ["连接前需按门店规则观看广告", "普通客户默认停留在 WiFi 页面"],
+    complianceCopy: [
+      "观看广告后可获得本次 WiFi 连接授权。如广告暂不可用，可稍后重试或联系店员。",
+      "普通客户默认停留在 WiFi 页面",
+    ],
   },
   {
     route: "pages/ad/index",
@@ -104,7 +107,11 @@ export const miniappPageCatalog: MiniappPageSpec[] = [
     states: ["loading", "ready", "error", "manual_fallback"],
     emptyState: "广告加载中",
     apiBindings: [miniappApiBindings.adStart, miniappApiBindings.adFinish, miniappApiBindings.wifiRewardToken],
-    complianceCopy: ["必须用户点击触发广告，不能自动弹出", "广告完成以后才继续获取 WiFi 授权"],
+    complianceCopy: [
+      "必须用户点击触发广告，不能自动弹出",
+      "广告未完整观看，暂不能获取自动连接授权。",
+      "已完成观看，正在为你连接 WiFi。",
+    ],
   },
   {
     route: "pages/connect-result/index",
@@ -133,12 +140,12 @@ export const miniappPageCatalog: MiniappPageSpec[] = [
     title: "商家申请",
     roleGate: "merchant_application_public",
     primaryAction: "提交申请",
-    fields: ["商户名称", "联系人", "手机号", "门店名称", "可选 WiFi 信息", "商户协议勾选"],
+    fields: ["商户名称", "申请人姓名", "手机号", "门店名称", "城市", "地址", "行业", "可选 WiFi 信息", "商户协议勾选"],
     actions: ["提交申请", "查看商户协议", "返回 WiFi 首页"],
     states: ["ready", "loading", "error"],
     emptyState: "请填写商家申请信息",
     apiBindings: [miniappApiBindings.merchantApplicationSubmit],
-    complianceCopy: ["开发阶段可使用 mock/manual 手机号", "真实微信手机号授权后置"],
+    complianceCopy: ["开发阶段可使用 mock/manual 手机号", "WiFi 信息可选，也可以审核通过后在后台配置", "真实微信手机号授权后置"],
   },
   {
     route: "pages/merchant/application-status",

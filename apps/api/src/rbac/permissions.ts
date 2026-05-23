@@ -12,6 +12,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, string[]> = {
     "ads.write",
     "ranking.read",
     "ranking.write",
+    "operation_log.read",
   ],
   finance: [
     "admin.dashboard.read",
