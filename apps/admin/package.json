@@ -1,0 +1,9 @@
+{
+  "name": "@wifi-ad/admin",
+  "version": "3.4.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  }
+}

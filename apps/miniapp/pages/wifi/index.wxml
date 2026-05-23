@@ -1,0 +1,5 @@
+<view class="page" data-phase="01">
+  <view>{{storeName || '门店 WiFi'}}</view>
+  <button>{{primaryAction || '一键连接 WiFi'}}</button>
+  <view class="merchant-entry">{{merchantEntryText || '商家申请'}}</view>
+</view>

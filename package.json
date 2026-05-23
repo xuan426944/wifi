@@ -1,0 +1,23 @@
+{
+  "name": "wifi-ad-platform",
+  "version": "3.4.0",
+  "private": true,
+  "workspaces": [
+    "apps/api",
+    "apps/admin",
+    "apps/miniapp"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "phase:01:check": "npm run test && npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/supertest": "^6.0.3",
+    "supertest": "^7.1.4",
+    "tsx": "^4.20.4",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "description": "V3.4 Phase 01 miniapp scaffold with mock WiFi flow pages",
+  "appid": "touristappid",
+  "projectname": "wifi-ad-miniapp",
+  "compileType": "miniprogram"
+}

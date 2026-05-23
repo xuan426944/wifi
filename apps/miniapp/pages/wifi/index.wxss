@@ -1,0 +1,2 @@
+.page { padding: 24rpx; }
+.merchant-entry { position: fixed; right: 24rpx; bottom: 24rpx; font-size: 24rpx; }

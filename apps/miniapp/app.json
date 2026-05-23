@@ -1,0 +1,14 @@
+{
+  "pages": [
+    "pages/wifi/index",
+    "pages/ad/index",
+    "pages/connect-result/index",
+    "pages/manual-connect/index",
+    "pages/merchant/dashboard"
+  ],
+  "window": {
+    "navigationBarTitleText": "门店 WiFi",
+    "navigationBarBackgroundColor": "#ffffff",
+    "navigationBarTextStyle": "black"
+  }
+}
