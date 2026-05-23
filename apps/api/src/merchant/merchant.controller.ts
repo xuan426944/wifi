@@ -1,6 +1,6 @@
 import { Controller, Get, Inject, Post, Query, Req, UseGuards } from "@nestjs/common";
 import { emptyPage, ok } from "../common/api-response";
-import { InMemoryStore } from "../database/in-memory-store";
+import { MERCHANT_REPOSITORY, MerchantRepository } from "../database/repositories";
 import { MerchantRoute } from "../rbac/decorators";
 import { MerchantGuard } from "../rbac/merchant.guard";
 
@@ -8,12 +8,12 @@ import { MerchantGuard } from "../rbac/merchant.guard";
 @UseGuards(MerchantGuard)
 @MerchantRoute()
 export class MerchantController {
-  constructor(@Inject(InMemoryStore) private readonly store: InMemoryStore) {}
+  constructor(@Inject(MERCHANT_REPOSITORY) private readonly merchants: MerchantRepository) {}
 
   @Get("dashboard")
   dashboard(@Req() request: any) {
     const merchantId = request.principal.roleContext.merchantId;
-    const merchant = this.store.merchants.find((item) => item.id === merchantId);
+    const merchant = merchantId ? this.merchants.findById(merchantId) : undefined;
     return ok({
       merchantId,
       merchantName: merchant?.name,

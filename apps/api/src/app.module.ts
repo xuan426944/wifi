@@ -7,6 +7,21 @@ import { AuthController } from "./auth/auth.controller";
 import { AuthService } from "./auth/auth.service";
 import { APP_CONFIG, loadAppConfig } from "./config/app-config";
 import { InMemoryStore } from "./database/in-memory-store";
+import {
+  MemoryMerchantRepository,
+  MemoryStoreRepository,
+  MemoryUserRepository,
+  MemoryWalletRepository,
+  MemoryWifiConfigRepository,
+} from "./database/memory-repositories";
+import { MIGRATIONS_DIR, MigrationService } from "./database/migration.service";
+import {
+  MERCHANT_REPOSITORY,
+  STORE_REPOSITORY,
+  USER_REPOSITORY,
+  WALLET_REPOSITORY,
+  WIFI_CONFIG_REPOSITORY,
+} from "./database/repositories";
 import { MerchantApplicationController } from "./merchant/merchant-application.controller";
 import { MerchantController } from "./merchant/merchant.controller";
 import { RankingController } from "./merchant/ranking.controller";
@@ -30,6 +45,7 @@ import { AuthGuard } from "./rbac/auth.guard";
 import { StoreController } from "./store/store.controller";
 import { WifiController } from "./wifi/wifi.controller";
 import { WifiService } from "./wifi/wifi.service";
+import { join } from "node:path";
 
 @Module({
   controllers: [
@@ -48,8 +64,15 @@ import { WifiService } from "./wifi/wifi.service";
     AuthService,
     AdService,
     WifiService,
+    MigrationService,
     OperationLogService,
     { provide: APP_CONFIG, useFactory: () => loadAppConfig() },
+    { provide: MIGRATIONS_DIR, useValue: join(__dirname, "database", "migrations") },
+    { provide: USER_REPOSITORY, useClass: MemoryUserRepository },
+    { provide: MERCHANT_REPOSITORY, useClass: MemoryMerchantRepository },
+    { provide: STORE_REPOSITORY, useClass: MemoryStoreRepository },
+    { provide: WIFI_CONFIG_REPOSITORY, useClass: MemoryWifiConfigRepository },
+    { provide: WALLET_REPOSITORY, useClass: MemoryWalletRepository },
     { provide: AUTH_PROVIDER, useClass: MockAuthProvider },
     { provide: AD_PROVIDER, useClass: MockAdProvider },
     { provide: WIFI_PROVIDER, useClass: MockWifiProvider },

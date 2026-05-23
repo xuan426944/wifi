@@ -1,5 +1,12 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { InMemoryStore } from "../database/in-memory-store";
+import {
+  MERCHANT_REPOSITORY,
+  MerchantRepository,
+  STORE_REPOSITORY,
+  StoreRepository,
+  USER_REPOSITORY,
+  UserRepository,
+} from "../database/repositories";
 import { AUTH_PROVIDER, AuthProvider } from "../providers/provider.interfaces";
 import { encodeMockToken, Principal, RoleContext } from "./role-context";
 
@@ -7,11 +14,14 @@ import { encodeMockToken, Principal, RoleContext } from "./role-context";
 export class AuthService {
   constructor(
     @Inject(AUTH_PROVIDER) private readonly authProvider: AuthProvider,
-    @Inject(InMemoryStore) private readonly store: InMemoryStore,
+    @Inject(USER_REPOSITORY) private readonly users: UserRepository,
+    @Inject(MERCHANT_REPOSITORY) private readonly merchants: MerchantRepository,
+    @Inject(STORE_REPOSITORY) private readonly stores: StoreRepository,
   ) {}
 
   async wxLogin(input: { code: string; mockOpenid?: string }) {
     const session = await this.authProvider.code2Session(input.code, input.mockOpenid);
+    this.users.findOrCreateByOpenid(session.openid, session.unionid);
     const roleContext = this.buildRoleContext(session.openid);
     const principal: Principal = { openid: session.openid, roleContext };
     return {
@@ -29,7 +39,7 @@ export class AuthService {
   }
 
   buildRoleContext(openid: string): RoleContext {
-    const owner = this.store.findMerchantOwner(openid);
+    const owner = this.merchants.findActiveOwner(openid);
     if (!owner || owner.merchant.status !== "active") {
       return {
         openid,
@@ -43,7 +53,7 @@ export class AuthService {
       };
     }
 
-    const storeCount = this.store.stores.filter((store) => store.merchantId === owner.merchant.id).length;
+    const storeCount = this.stores.findByMerchantId(owner.merchant.id).length;
     return {
       openid,
       isMerchantOwner: true,

@@ -2,6 +2,7 @@ import { Inject, Injectable } from "@nestjs/common";
 import { loadAppConfig } from "../config/app-config";
 import { ApiException, ERROR_CODES } from "../common/errors";
 import { InMemoryStore } from "../database/in-memory-store";
+import { WIFI_CONFIG_REPOSITORY, WifiConfigRepository } from "../database/repositories";
 import { WIFI_PROVIDER, WifiProvider } from "../providers/provider.interfaces";
 
 const tokenCode = () => `RT${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
@@ -10,6 +11,7 @@ const tokenCode = () => `RT${Date.now().toString(36)}${Math.random().toString(36
 export class WifiService {
   constructor(
     @Inject(WIFI_PROVIDER) private readonly wifiProvider: WifiProvider,
+    @Inject(WIFI_CONFIG_REPOSITORY) private readonly wifiConfigs: WifiConfigRepository,
     @Inject(InMemoryStore) private readonly store: InMemoryStore,
   ) {}
 
@@ -42,6 +44,10 @@ export class WifiService {
     }
     if (token.status === "used") {
       throw new ApiException(ERROR_CODES.REWARD_TOKEN_USED, "WiFi 授权已使用", 400);
+    }
+    const configured = this.wifiConfigs.findPrimaryByStoreId(token.storeId);
+    if (!configured) {
+      throw new ApiException(ERROR_CODES.WIFI_NOT_CONFIGURED, "门店 WiFi 未配置", 400);
     }
     const connectInfo = await this.wifiProvider.getConnectInfo({
       storeId: token.storeId,

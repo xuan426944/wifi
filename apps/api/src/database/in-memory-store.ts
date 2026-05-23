@@ -1,5 +1,12 @@
 import { Injectable } from "@nestjs/common";
-import { MerchantEntity, MerchantOwnerEntity, StoreEntity, UserEntity } from "./entities";
+import {
+  MerchantEntity,
+  MerchantOwnerEntity,
+  MerchantWalletEntity,
+  StoreEntity,
+  StoreWifiEntity,
+  UserEntity,
+} from "./entities";
 
 export interface AdViewRecord {
   viewNo: string;
@@ -19,9 +26,14 @@ export interface RewardTokenRecord {
 
 @Injectable()
 export class InMemoryStore {
+  private userSeq = 2;
+  private merchantSeq = 1;
+  private storeSeq = 1;
+  private wifiSeq = 1;
+
   readonly users: UserEntity[] = [
-    { id: 1, openid: "mock_customer", status: "active" },
-    { id: 2, openid: "mock_merchant_active", status: "active" },
+    { id: 1, openid: "mock_customer", userType: "customer", status: "active" },
+    { id: 2, openid: "mock_merchant_active", userType: "merchant_owner", status: "active" },
   ];
 
   readonly merchants: MerchantEntity[] = [
@@ -61,6 +73,37 @@ export class InMemoryStore {
     },
   ];
 
+  readonly storeWifi: StoreWifiEntity[] = [
+    {
+      id: 1,
+      storeId: 1,
+      ssid: "Mock-WiFi",
+      passwordCipher: "mock-cipher:12345678",
+      passwordMasked: "********",
+      securityType: "WPA2",
+      connectMode: "mock",
+      isPrimary: true,
+      isEnabled: true,
+      allowCopyPassword: true,
+      showManualFallback: true,
+      passwordViewPolicy: "never_plain",
+      remark: "Phase 02 mock WiFi",
+      updatedAt: new Date(0).toISOString(),
+    },
+  ];
+
+  readonly wallets: MerchantWalletEntity[] = [
+    {
+      merchantId: 1,
+      totalConfirmedCent: 0,
+      availableCent: 0,
+      frozenWithdrawCent: 0,
+      frozenRiskCent: 0,
+      totalWithdrawnCent: 0,
+      version: 0,
+    },
+  ];
+
   readonly adViews = new Map<string, AdViewRecord>();
   readonly rewardTokens = new Map<string, RewardTokenRecord>();
 
@@ -71,5 +114,25 @@ export class InMemoryStore {
     }
     const merchant = this.merchants.find((item) => item.id === owner.merchantId);
     return merchant ? { owner, merchant } : undefined;
+  }
+
+  nextUserId() {
+    this.userSeq += 1;
+    return this.userSeq;
+  }
+
+  nextMerchantId() {
+    this.merchantSeq += 1;
+    return this.merchantSeq;
+  }
+
+  nextStoreId() {
+    this.storeSeq += 1;
+    return this.storeSeq;
+  }
+
+  nextWifiId() {
+    this.wifiSeq += 1;
+    return this.wifiSeq;
   }
 }

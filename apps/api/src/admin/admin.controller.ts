@@ -1,7 +1,17 @@
 import { Body, Controller, Get, Inject, Param, Post, Put, Query, Req, UseGuards } from "@nestjs/common";
 import { emptyPage, ok } from "../common/api-response";
 import { ApiException, ERROR_CODES } from "../common/errors";
-import { InMemoryStore } from "../database/in-memory-store";
+import { CreateMerchantDto, CreateStoreDto, SaveWifiConfigDto, UpdateShareRateDto } from "../database/dtos";
+import {
+  MERCHANT_REPOSITORY,
+  MerchantRepository,
+  STORE_REPOSITORY,
+  StoreRepository,
+  WALLET_REPOSITORY,
+  WIFI_CONFIG_REPOSITORY,
+  WalletRepository,
+  WifiConfigRepository,
+} from "../database/repositories";
 import { OperationLogService } from "../operation-log/operation-log.service";
 import { RequirePermission } from "../rbac/decorators";
 import { AdminPermissionGuard } from "../rbac/admin-permission.guard";
@@ -10,7 +20,10 @@ import { AdminPermissionGuard } from "../rbac/admin-permission.guard";
 @UseGuards(AdminPermissionGuard)
 export class AdminController {
   constructor(
-    @Inject(InMemoryStore) private readonly store: InMemoryStore,
+    @Inject(MERCHANT_REPOSITORY) private readonly merchantsRepo: MerchantRepository,
+    @Inject(STORE_REPOSITORY) private readonly storesRepo: StoreRepository,
+    @Inject(WIFI_CONFIG_REPOSITORY) private readonly wifiRepo: WifiConfigRepository,
+    @Inject(WALLET_REPOSITORY) private readonly walletsRepo: WalletRepository,
     @Inject(OperationLogService) private readonly operationLogs: OperationLogService,
   ) {}
 
@@ -29,7 +42,7 @@ export class AdminController {
       monthWithdrawCent: 0,
       pendingWithdrawCount: 0,
       abnormalRiskEventCount: 0,
-      activeStoreCount: this.store.stores.length,
+      activeStoreCount: this.storesRepo.list().filter((store) => store.status === "active").length,
       emptyState: true,
     });
   }
@@ -39,11 +52,11 @@ export class AdminController {
   merchants(@Query("page") page = "1", @Query("pageSize") pageSize = "20") {
     return ok({
       ...emptyPage(Number(page), Number(pageSize)),
-      list: this.store.merchants.map((merchant) => ({
+      list: this.merchantsRepo.list().map((merchant) => ({
         ...merchant,
         ownerPhone: this.maskPhone(merchant.ownerPhone),
       })),
-      total: this.store.merchants.length,
+      total: this.merchantsRepo.list().length,
     });
   }
 
@@ -80,15 +93,22 @@ export class AdminController {
 
   @Post("merchants")
   @RequirePermission("merchant.create")
-  createMerchant() {
-    return ok({ id: null, status: "empty_phase_01" });
+  createMerchant(@Req() request: any, @Body() body: CreateMerchantDto) {
+    const merchant = this.merchantsRepo.create(body);
+    this.log(request, "merchant.create", "merchant", merchant.id, { merchantNo: merchant.merchantNo });
+    return ok(merchant);
   }
 
   @Get("merchants/:id")
   @RequirePermission("admin.dashboard.read")
   merchantDetail(@Param("id") id: string) {
-    const merchant = this.store.merchants.find((item) => item.id === Number(id));
-    return ok({ merchant: merchant ?? null, stores: [], walletSummary: null });
+    const merchantId = Number(id);
+    const merchant = this.merchantsRepo.findById(merchantId);
+    return ok({
+      merchant: merchant ?? null,
+      stores: this.storesRepo.findByMerchantId(merchantId),
+      walletSummary: this.walletsRepo.findByMerchantId(merchantId) ?? null,
+    });
   }
 
   @Put("merchants/:id")
@@ -126,29 +146,35 @@ export class AdminController {
     @Body() body: { shareRateBps: number; reason: string; confirm: boolean },
   ) {
     this.assertShareRate(body.shareRateBps, body.reason, body.confirm);
+    const merchant = this.merchantsRepo.updateShareRate(Number(id), body);
     this.log(request, "merchant.share_rate.update", "merchant", id, {
       shareRateBps: body.shareRateBps,
       reason: body.reason,
     });
-    return ok({ id: Number(id), shareRateBps: body.shareRateBps, effective: "next_event" });
+    return ok({ id: merchant.id, shareRateBps: merchant.shareRateBps, effective: "next_event" });
   }
 
   @Get("stores")
   @RequirePermission("admin.dashboard.read")
   stores() {
-    return ok({ ...emptyPage(), list: this.store.stores, total: this.store.stores.length });
+    const list = this.storesRepo.list();
+    return ok({ ...emptyPage(), list, total: list.length });
   }
 
   @Post("stores")
   @RequirePermission("store.create")
-  createStore() {
-    return ok({ id: null, status: "empty_phase_01" });
+  createStore(@Req() request: any, @Body() body: CreateStoreDto) {
+    const store = this.storesRepo.create(body);
+    this.log(request, "store.create", "store", store.id, { storeNo: store.storeNo });
+    return ok(store);
   }
 
   @Get("stores/:id")
   @RequirePermission("admin.dashboard.read")
   storeDetail(@Param("id") id: string) {
-    return ok({ id: Number(id), wifiStatus: "未配置" });
+    const store = this.storesRepo.findById(Number(id));
+    const wifi = this.wifiRepo.findPrimaryByStoreId(Number(id));
+    return ok({ store, wifiStatus: wifi ? "已配置" : "未配置", wifi: wifi ? this.sanitizeWifi(wifi) : null });
   }
 
   @Put("stores/:id")
@@ -159,30 +185,34 @@ export class AdminController {
 
   @Post("stores/:id/share-rate")
   @RequirePermission("store.share_rate.write")
-  updateStoreShareRate(@Req() request: any, @Param("id") id: string, @Body() body: { shareRateBps: number; reason: string; confirm: boolean }) {
+  updateStoreShareRate(@Req() request: any, @Param("id") id: string, @Body() body: UpdateShareRateDto) {
     this.assertShareRate(body.shareRateBps, body.reason, body.confirm);
+    const store = this.storesRepo.updateShareRate(Number(id), body);
     this.log(request, "store.share_rate.update", "store", id, { shareRateBps: body.shareRateBps });
-    return ok({ id: Number(id), shareRateBps: body.shareRateBps, effective: "next_event" });
+    return ok({ id: store.id, shareRateBps: store.shareRateBps, effective: "next_event" });
   }
 
   @Get("wifi")
   @RequirePermission("admin.dashboard.read")
   wifiList() {
-    return ok({ ...emptyPage(), emptyText: "未配置" });
+    const list = this.wifiRepo.list().map((wifi) => this.sanitizeWifi(wifi));
+    return ok({ ...emptyPage(), list, total: list.length, emptyText: "未配置" });
   }
 
   @Post("wifi/save")
   @RequirePermission("wifi.write")
-  saveWifi(@Req() request: any, @Body() body: { storeId: number; ssid: string }) {
-    this.log(request, "wifi.save", "store_wifi", body.storeId, { ssid: body.ssid, passwordMasked: "********" });
-    return ok({ saved: true, passwordMasked: "********" });
+  saveWifi(@Req() request: any, @Body() body: SaveWifiConfigDto) {
+    const wifi = this.wifiRepo.save(body);
+    this.log(request, "wifi.save", "store_wifi", wifi.id, { ssid: wifi.ssid, passwordMasked: wifi.passwordMasked });
+    return ok(this.sanitizeWifi(wifi));
   }
 
   @Post("wifi/:id/disable")
   @RequirePermission("wifi.write")
   disableWifi(@Req() request: any, @Param("id") id: string) {
+    const wifi = this.wifiRepo.disable(Number(id));
     this.log(request, "wifi.disable", "store_wifi", id, { status: "disabled" });
-    return ok({ id: Number(id), disabled: true });
+    return ok({ id: Number(id), disabled: Boolean(wifi) });
   }
 
   @Post("qrcode/generate")
@@ -239,7 +269,8 @@ export class AdminController {
   @Get("wallets")
   @RequirePermission("wallet.read")
   wallets() {
-    return ok(emptyPage());
+    const list = this.walletsRepo.list();
+    return ok({ ...emptyPage(), list, total: list.length });
   }
 
   @Get("wallets/:merchantId/ledger")
@@ -402,5 +433,10 @@ export class AdminController {
 
   private maskPhone(phone?: string) {
     return phone ? phone.replace(/(\d{3})\d{4}(\d+)/, "$1****$2") : phone;
+  }
+
+  private sanitizeWifi<T extends { passwordCipher?: string }>(wifi: T) {
+    const { passwordCipher: _passwordCipher, ...safeWifi } = wifi;
+    return safeWifi;
   }
 }
