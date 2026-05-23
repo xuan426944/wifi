@@ -4,12 +4,15 @@ import {
   MerchantOwnerEntity,
   MerchantWalletEntity,
   QrcodeEntity,
+  RevenueRecordEntity,
   StoreEntity,
   StoreWifiEntity,
   UserEntity,
+  WalletLedgerEntity,
 } from "./entities";
 
 export interface AdViewRecord {
+  id: number;
   viewNo: string;
   openid: string;
   storeId: number;
@@ -57,6 +60,9 @@ export class InMemoryStore {
   private qrcodeSeq = 1;
   private scanLogSeq = 0;
   private wifiConnectLogSeq = 0;
+  private adViewLogSeq = 0;
+  private revenueSeq = 0;
+  private ledgerSeq = 0;
 
   readonly users: UserEntity[] = [
     { id: 1, openid: "mock_customer", userType: "customer", status: "active" },
@@ -202,6 +208,7 @@ export class InMemoryStore {
       frozenRiskCent: 0,
       totalWithdrawnCent: 0,
       version: 0,
+      updatedAt: new Date(0).toISOString(),
     },
     {
       merchantId: 2,
@@ -211,6 +218,7 @@ export class InMemoryStore {
       frozenRiskCent: 0,
       totalWithdrawnCent: 0,
       version: 0,
+      updatedAt: new Date(0).toISOString(),
     },
     {
       merchantId: 3,
@@ -220,6 +228,7 @@ export class InMemoryStore {
       frozenRiskCent: 0,
       totalWithdrawnCent: 0,
       version: 0,
+      updatedAt: new Date(0).toISOString(),
     },
     {
       merchantId: 4,
@@ -229,6 +238,7 @@ export class InMemoryStore {
       frozenRiskCent: 0,
       totalWithdrawnCent: 0,
       version: 0,
+      updatedAt: new Date(0).toISOString(),
     },
   ];
 
@@ -236,6 +246,8 @@ export class InMemoryStore {
   readonly rewardTokens = new Map<string, RewardTokenRecord>();
   readonly scanLogs: ScanLogRecord[] = [];
   readonly wifiConnectLogs: WifiConnectLogRecord[] = [];
+  readonly revenueRecords: RevenueRecordEntity[] = [];
+  readonly walletLedger: WalletLedgerEntity[] = [];
 
   findMerchantOwner(openid: string) {
     const owner = this.merchantOwners.find((item) => item.openid === openid && item.status === "active");
@@ -279,5 +291,20 @@ export class InMemoryStore {
   nextWifiConnectLogId() {
     this.wifiConnectLogSeq += 1;
     return this.wifiConnectLogSeq;
+  }
+
+  nextAdViewLogId() {
+    this.adViewLogSeq += 1;
+    return this.adViewLogSeq;
+  }
+
+  nextRevenueId() {
+    this.revenueSeq += 1;
+    return this.revenueSeq;
+  }
+
+  nextLedgerId() {
+    this.ledgerSeq += 1;
+    return this.ledgerSeq;
   }
 }

@@ -17,5 +17,10 @@ describe("Phase 01 miniapp scaffold", () => {
     expect(dashboard?.visibleTo).toBe("merchant_owner_active");
     expect(dashboard?.fields).toContain("可提现金额");
     expect(dashboard?.fields).toContain("门店二维码");
+
+    const revenue = miniappPageCatalog.find((page) => page.route === "pages/merchant/revenue");
+    expect(revenue?.visibleTo).toBe("merchant_owner_active");
+    expect(revenue?.fields).toContain("预估收益");
+    expect(revenue?.fields).toContain("确认收益");
   });
 });

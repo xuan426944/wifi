@@ -46,6 +46,7 @@ import {
 import { AdminPermissionGuard } from "./rbac/admin-permission.guard";
 import { AuthGuard } from "./rbac/auth.guard";
 import { MerchantGuard } from "./rbac/merchant.guard";
+import { RevenueService } from "./revenue/revenue.service";
 import { StoreController } from "./store/store.controller";
 import { WifiController } from "./wifi/wifi.controller";
 import { WifiService } from "./wifi/wifi.service";
@@ -68,6 +69,7 @@ import { join } from "node:path";
     AuthService,
     AdService,
     WifiService,
+    RevenueService,
     MigrationService,
     OperationLogService,
     AdminPermissionGuard,

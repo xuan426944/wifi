@@ -44,6 +44,13 @@ export const miniappPageCatalog: MiniappPageSpec[] = [
     fields: ["今日预估收益", "昨日确认收益", "本月收益", "可提现金额", "排行榜", "门店二维码"],
     emptyState: "暂无商户数据",
   },
+  {
+    route: "pages/merchant/revenue",
+    title: "收益明细",
+    visibleTo: "merchant_owner_active",
+    fields: ["日期", "扫码数", "广告完成", "有效广告", "预估收益", "确认收益", "状态"],
+    emptyState: "暂无收益明细",
+  },
 ];
 
 export const customerRoutes = miniappPageCatalog

@@ -390,9 +390,9 @@ paths:
     get: { summary: 广告投放列表, responses: { '200': { description: page } } }
     post: { summary: 新增广告投放, responses: { '200': { description: created } } }
   /admin/revenue:
-    get: { summary: 收益记录列表, responses: { '200': { description: page } } }
+    get: { summary: 收益记录列表，包含固化分成比例和结算状态, responses: { '200': { description: page } } }
   /admin/settlement/import:
-    post: { summary: 导入结算数据, responses: { '200': { description: batch result } } }
+    post: { summary: 导入/确认 mock 结算数据，确认后必须写 wallet_ledger, responses: { '200': { description: batch result } } }
   /admin/wallets:
     get: { summary: 钱包列表, responses: { '200': { description: page } } }
   /admin/wallets/{merchantId}/ledger:

@@ -18,6 +18,7 @@ import {
 import { OperationLogService } from "../operation-log/operation-log.service";
 import { RequirePermission } from "../rbac/decorators";
 import { AdminPermissionGuard } from "../rbac/admin-permission.guard";
+import { RevenueService } from "../revenue/revenue.service";
 
 const WIFI_SECURITY_TYPES = ["none", "WEP", "WPA", "WPA2", "WPA3"] as const;
 const WIFI_CONNECT_MODES = ["mock", "wechat", "manual"] as const;
@@ -34,21 +35,30 @@ export class AdminController {
     @Inject(WALLET_REPOSITORY) private readonly walletsRepo: WalletRepository,
     @Inject(OperationLogService) private readonly operationLogs: OperationLogService,
     @Inject(InMemoryStore) private readonly memoryStore: InMemoryStore,
+    @Inject(RevenueService) private readonly revenues: RevenueService,
   ) {}
 
   @Get("dashboard")
   @RequirePermission("admin.dashboard.read")
   dashboard() {
     const adViews = [...this.memoryStore.adViews.values()];
+    const allRevenueSummary = this.memoryStore.revenueRecords.reduce(
+      (sum, record) => ({
+        estimated: sum.estimated + (record.status === "estimated" ? record.merchantAmountCent : 0),
+        confirmed: sum.confirmed + (record.status === "withdrawable" ? record.merchantAmountCent : 0),
+        platform: sum.platform + record.platformAmountCent,
+      }),
+      { estimated: 0, confirmed: 0, platform: 0 },
+    );
     return ok({
       todayScanUsers: new Set(this.memoryStore.scanLogs.map((log) => log.openid)).size,
       todayAdViews: adViews.length,
       todayAdCompletes: adViews.filter((view) => view.isEffective).length,
       todayConnectSuccess: this.memoryStore.wifiConnectLogs.filter((log) => log.status === "success").length,
-      todayEstimatedRevenueCent: 0,
-      todayMerchantShareCent: 0,
-      todayPlatformRevenueCent: 0,
-      monthSettlementIncomeCent: 0,
+      todayEstimatedRevenueCent: allRevenueSummary.estimated,
+      todayMerchantShareCent: allRevenueSummary.confirmed,
+      todayPlatformRevenueCent: allRevenueSummary.platform,
+      monthSettlementIncomeCent: allRevenueSummary.confirmed,
       monthWithdrawCent: 0,
       pendingWithdrawCount: 0,
       abnormalRiskEventCount: 0,
@@ -387,15 +397,30 @@ export class AdminController {
 
   @Get("revenue")
   @RequirePermission("revenue.read")
-  revenue() {
-    return ok(emptyPage());
+  revenue(@Query("page") page = "1", @Query("pageSize") pageSize = "20", @Query("status") status?: string) {
+    const list = this.revenues.list({ status });
+    return ok({ ...emptyPage(Number(page), Number(pageSize)), list, total: list.length });
   }
 
   @Post("settlement/import")
   @RequirePermission("revenue.confirm")
-  importSettlement(@Req() request: any) {
-    this.log(request, "settlement.import", "settlement", "phase_01", { imported: 0 });
-    return ok({ imported: 0, abnormal: 0 });
+  importSettlement(
+    @Req() request: any,
+    @Body() body: { revenueNos?: string[]; settlementBatchId?: number; confirm?: boolean; remark?: string } = {},
+  ) {
+    const result = this.revenues.confirmEstimated({
+      revenueNos: body.revenueNos,
+      settlementBatchId: body.settlementBatchId,
+      operatorRole: request.adminRole,
+      remark: body.remark,
+    });
+    this.log(request, "settlement.import", "settlement", result.settlementBatchId, {
+      imported: result.imported,
+      confirmed: result.confirmed,
+      abnormal: result.abnormal,
+      walletLedgerRequired: true,
+    });
+    return ok(result);
   }
 
   @Get("wallets")
@@ -408,7 +433,8 @@ export class AdminController {
   @Get("wallets/:merchantId/ledger")
   @RequirePermission("wallet.read")
   walletLedger(@Param("merchantId") merchantId: string) {
-    return ok({ merchantId: Number(merchantId), ...emptyPage() });
+    const list = this.walletsRepo.ledgerByMerchantId(Number(merchantId));
+    return ok({ merchantId: Number(merchantId), ...emptyPage(), list, total: list.length });
   }
 
   @Post("wallets/adjust")

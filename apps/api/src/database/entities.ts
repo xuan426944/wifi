@@ -12,6 +12,8 @@ export type WalletLedgerType =
   | "manual_adjust_add"
   | "manual_adjust_sub"
   | "reversal";
+export type RevenueStatus = "estimated" | "pending_settlement" | "confirmed" | "withdrawable" | "frozen" | "invalid";
+export type ShareRuleSource = "store" | "merchant" | "campaign" | "global";
 
 export interface UserEntity {
   id: number;
@@ -94,6 +96,7 @@ export interface MerchantWalletEntity {
   frozenRiskCent: number;
   totalWithdrawnCent: number;
   version: number;
+  updatedAt?: string;
 }
 
 export interface WalletLedgerEntity {
@@ -105,7 +108,32 @@ export interface WalletLedgerEntity {
   availableAfterCent: number;
   frozenWithdrawAfterCent: number;
   frozenRiskAfterCent: number;
+  refType?: string;
+  refId?: number;
+  refLedgerId?: number;
   idempotencyKey: string;
+  remark?: string;
+  createdAt?: string;
+}
+
+export interface RevenueRecordEntity {
+  id: number;
+  revenueNo: string;
+  merchantId: number;
+  storeId: number;
+  adViewLogId?: number;
+  viewNo?: string;
+  settlementBatchId?: number;
+  grossAmountCent: number;
+  merchantAmountCent: number;
+  platformAmountCent: number;
+  appliedShareRateBps: number;
+  shareRuleSource: ShareRuleSource;
+  shareRuleRefId?: number;
+  status: RevenueStatus;
+  invalidReason?: string;
+  createdAt: string;
+  confirmedAt?: string;
 }
 
 export const PHASE_01_REQUIRED_TABLES = [

@@ -10,6 +10,9 @@ describe("Phase 01 admin page scaffold", () => {
       adminPageCatalog.some((page) => page.path === "/admin/wifi" && page.fields.includes("手动兜底")),
     ).toBe(true);
     expect(
+      adminPageCatalog.some((page) => page.path === "/admin/revenue" && page.highRiskActions?.includes("确认结算")),
+    ).toBe(true);
+    expect(
       adminPageCatalog.some((page) => page.path === "/admin/withdraws" && page.highRiskActions?.includes("审核通过")),
     ).toBe(true);
     expect(adminPageCatalog.some((page) => page.path === "/admin/operation-logs")).toBe(true);

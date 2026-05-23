@@ -3,6 +3,7 @@ import {
   MerchantOwnerEntity,
   MerchantWalletEntity,
   QrcodeEntity,
+  WalletLedgerEntity,
   StoreEntity,
   StoreWifiEntity,
   UserEntity,
@@ -50,6 +51,7 @@ export interface QrcodeRepository {
 export interface WalletRepository {
   list(): MerchantWalletEntity[];
   findByMerchantId(merchantId: number): MerchantWalletEntity | undefined;
+  ledgerByMerchantId(merchantId: number): WalletLedgerEntity[];
 }
 
 export const USER_REPOSITORY = Symbol("USER_REPOSITORY");

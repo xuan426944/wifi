@@ -311,4 +311,8 @@ export class MemoryWalletRepository implements WalletRepository {
   findByMerchantId(merchantId: number) {
     return this.store.wallets.find((wallet) => wallet.merchantId === merchantId);
   }
+
+  ledgerByMerchantId(merchantId: number) {
+    return this.store.walletLedger.filter((ledger) => ledger.merchantId === merchantId).reverse();
+  }
 }

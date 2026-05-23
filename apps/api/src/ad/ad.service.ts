@@ -3,6 +3,7 @@ import { ERROR_CODES, ApiException } from "../common/errors";
 import { InMemoryStore } from "../database/in-memory-store";
 import { STORE_REPOSITORY, StoreRepository, WIFI_CONFIG_REPOSITORY, WifiConfigRepository } from "../database/repositories";
 import { AD_PROVIDER, AdProvider } from "../providers/provider.interfaces";
+import { RevenueService } from "../revenue/revenue.service";
 import { WifiService } from "../wifi/wifi.service";
 
 @Injectable()
@@ -13,6 +14,7 @@ export class AdService {
     @Inject(STORE_REPOSITORY) private readonly stores: StoreRepository,
     @Inject(WIFI_CONFIG_REPOSITORY) private readonly wifiConfigs: WifiConfigRepository,
     @Inject(WifiService) private readonly wifiService: WifiService,
+    @Inject(RevenueService) private readonly revenueService: RevenueService,
   ) {}
 
   async start(openid: string, storeId: number) {
@@ -25,6 +27,7 @@ export class AdService {
     }
     const view = await this.adProvider.startView({ openid, storeId });
     this.store.adViews.set(view.viewNo, {
+      id: this.store.nextAdViewLogId(),
       viewNo: view.viewNo,
       openid,
       storeId,
@@ -82,10 +85,14 @@ export class AdService {
       storeId: record.storeId,
       viewNo: record.viewNo,
     });
+    const revenue = this.revenueService.createEstimatedFromAdView(record);
     return {
       ...result,
       ...reward,
       wifiConfigured: true,
+      revenueNo: revenue?.revenueNo,
+      estimatedMerchantAmountCent: revenue?.merchantAmountCent,
+      revenueEstimateNotice: "预估收益不等于可提现收益，以结算确认和风控审核后金额为准",
     };
   }
 }

@@ -63,6 +63,15 @@ export const adminPageCatalog: AdminPageSpec[] = [
     emptyState: "暂无钱包数据",
   },
   {
+    path: "/admin/revenue",
+    title: "收益管理",
+    permission: "revenue.read",
+    fields: ["收益编号", "商户", "门店", "广告观看记录", "毛收入", "商户收益", "平台收益", "应用比例", "规则来源", "状态"],
+    actions: ["查看", "确认结算", "作废", "人工重算", "导出"],
+    highRiskActions: ["确认结算", "作废", "人工重算"],
+    emptyState: "暂无收益记录",
+  },
+  {
     path: "/admin/withdraws",
     title: "提现管理",
     permission: "withdraw.review",
