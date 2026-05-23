@@ -11,7 +11,7 @@ import {
   UpdateShareRateDto,
   UpdateStoreDto,
 } from "../database/dtos";
-import { RankingConfigEntity } from "../database/entities";
+import { AdminUserEntity, RankingConfigEntity } from "../database/entities";
 import { InMemoryStore } from "../database/in-memory-store";
 import {
   MERCHANT_REPOSITORY,
@@ -31,6 +31,7 @@ import { RankingService } from "../ranking/ranking.service";
 import { ReconciliationService } from "../reconciliation/reconciliation.service";
 import { RequirePermission } from "../rbac/decorators";
 import { AdminPermissionGuard } from "../rbac/admin-permission.guard";
+import { ROLE_PERMISSIONS, isAdminRole } from "../rbac/permissions";
 import { RevenueService } from "../revenue/revenue.service";
 import { RiskService } from "../risk/risk.service";
 import { WithdrawService } from "../withdraw/withdraw.service";
@@ -658,15 +659,71 @@ export class AdminController {
 
   @Get("admin-users")
   @RequirePermission("permission.read")
-  adminUsers() {
-    return ok(emptyPage());
+  adminUsers(
+    @Query("page") page = "1",
+    @Query("pageSize") pageSize = "20",
+    @Query("username") username?: string,
+    @Query("role") role?: string,
+    @Query("status") status?: string,
+  ) {
+    const pageNumber = Number(page) || 1;
+    const pageSizeNumber = Number(pageSize) || 20;
+    const filtered = this.memoryStore.adminUsers
+      .filter((user) => !username || user.username.includes(username))
+      .filter((user) => !role || user.role === role)
+      .filter((user) => !status || user.status === status)
+      .map((user) => this.serializeAdminUser(user));
+    const start = (pageNumber - 1) * pageSizeNumber;
+    return ok({
+      ...emptyPage(pageNumber, pageSizeNumber),
+      list: filtered.slice(start, start + pageSizeNumber),
+      total: filtered.length,
+    });
   }
 
   @Post("admin-users")
   @RequirePermission("permission.write")
-  createAdminUser(@Req() request: any) {
-    this.log(request, "admin_user.create", "admin_user", "phase_01", {});
-    return ok({ id: null, status: "empty_phase_01" });
+  createAdminUser(
+    @Req() request: any,
+    @Body()
+    body: {
+      username?: string;
+      role?: string;
+      realName?: string;
+      phone?: string;
+      status?: "active" | "disabled";
+    } = {},
+  ) {
+    const username = body.username?.trim();
+    if (!username) {
+      throw new ApiException(ERROR_CODES.PARAM_INVALID, "后台账号不能为空");
+    }
+    if (!body.role || !isAdminRole(body.role)) {
+      throw new ApiException(ERROR_CODES.PARAM_INVALID, "后台角色无效");
+    }
+    if (this.memoryStore.adminUsers.some((user) => user.username === username)) {
+      throw new ApiException(ERROR_CODES.PARAM_INVALID, "后台账号已存在");
+    }
+    const now = new Date().toISOString();
+    const adminUser: AdminUserEntity = {
+      id: this.memoryStore.nextAdminUserId(),
+      username,
+      passwordHash: "mock-admin-password-hash",
+      realName: body.realName?.trim() || undefined,
+      phone: body.phone?.trim() || undefined,
+      role: body.role,
+      status: body.status === "disabled" ? "disabled" : "active",
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.memoryStore.adminUsers.push(adminUser);
+    this.log(request, "admin_user.create", "admin_user", String(adminUser.id), {
+      username: adminUser.username,
+      role: adminUser.role,
+      status: adminUser.status,
+      passwordHashMasked: true,
+    });
+    return ok(this.serializeAdminUser(adminUser));
   }
 
   @Get("roles")
@@ -675,6 +732,21 @@ export class AdminController {
     return ok({
       list: ["super_admin", "operator", "finance", "risk", "customer_service", "readonly_audit"],
     });
+  }
+
+  private serializeAdminUser(user: AdminUserEntity) {
+    return {
+      id: user.id,
+      username: user.username,
+      realName: user.realName,
+      phone: this.maskPhone(user.phone),
+      role: user.role,
+      status: user.status,
+      lastLoginAt: user.lastLoginAt,
+      permissionMatrix: ROLE_PERMISSIONS[user.role],
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
   }
 
   private serializeStore(store: NonNullable<ReturnType<StoreRepository["findById"]>>) {

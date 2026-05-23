@@ -67,6 +67,21 @@ export interface UserEntity {
   status: "active" | "disabled";
 }
 
+export type AdminUserRole = "super_admin" | "operator" | "finance" | "risk" | "customer_service" | "readonly_audit";
+
+export interface AdminUserEntity {
+  id: number;
+  username: string;
+  passwordHash: string;
+  realName?: string;
+  phone?: string;
+  role: AdminUserRole;
+  status: "active" | "disabled";
+  lastLoginAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface MerchantEntity {
   id: number;
   merchantNo: string;

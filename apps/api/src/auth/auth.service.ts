@@ -8,6 +8,7 @@ import {
   USER_REPOSITORY,
   UserRepository,
 } from "../database/repositories";
+import { InMemoryStore } from "../database/in-memory-store";
 import { AUTH_PROVIDER, AuthProvider } from "../providers/provider.interfaces";
 import { ROLE_PERMISSIONS, resolveMockAdminRole } from "../rbac/permissions";
 import { encodeMockToken, Principal, RoleContext } from "./role-context";
@@ -20,6 +21,7 @@ export class AuthService {
     @Inject(USER_REPOSITORY) private readonly users: UserRepository,
     @Inject(MERCHANT_REPOSITORY) private readonly merchants: MerchantRepository,
     @Inject(STORE_REPOSITORY) private readonly stores: StoreRepository,
+    @Inject(InMemoryStore) private readonly memoryStore: InMemoryStore,
   ) {}
 
   async wxLogin(input: { code: string; mockOpenid?: string }) {
@@ -35,10 +37,16 @@ export class AuthService {
   }
 
   adminLogin(input: { username?: string; password?: string } = {}) {
-    if (input.username === "disabled_admin") {
+    const username = input.username?.trim() || "admin";
+    const adminUser = this.memoryStore.adminUsers.find((user) => user.username === username);
+    if (adminUser?.status === "disabled") {
       throw new ApiException(ERROR_CODES.ADMIN_FORBIDDEN, "账号禁用", HttpStatus.FORBIDDEN);
     }
-    const role = resolveMockAdminRole(input.username);
+    const role = adminUser?.role ?? resolveMockAdminRole(username);
+    if (adminUser) {
+      adminUser.lastLoginAt = new Date().toISOString();
+      adminUser.updatedAt = adminUser.lastLoginAt;
+    }
     return {
       token: `admin.mock.${role}`,
       permissions: ROLE_PERMISSIONS[role],

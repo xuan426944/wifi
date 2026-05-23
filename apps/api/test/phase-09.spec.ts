@@ -86,4 +86,43 @@ describe("Phase 09 PC admin page support APIs", () => {
       .send({ configs: [] })
       .expect(201);
   });
+
+  it("serves permission users without phase placeholders and supports mock-created admin login", async () => {
+    const readonlyToken = await adminLogin("readonly_audit");
+    const superToken = await adminLogin("admin");
+
+    const initial = await request(httpServer)
+      .get("/api/admin/admin-users")
+      .set("Authorization", `Bearer ${readonlyToken}`)
+      .expect(200);
+    expect(initial.body.data.list).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ username: "admin", role: "super_admin", status: "active" }),
+        expect.objectContaining({ username: "readonly_audit", role: "readonly_audit", status: "active" }),
+      ]),
+    );
+    expect(JSON.stringify(initial.body.data)).not.toContain("empty_phase_01");
+    expect(JSON.stringify(initial.body.data)).not.toContain("passwordHash");
+
+    const created = await request(httpServer)
+      .post("/api/admin/admin-users")
+      .set("Authorization", `Bearer ${superToken}`)
+      .send({ username: "phase09_operator", role: "operator", status: "active", phone: "13800000009" })
+      .expect(201);
+    expect(created.body.data).toMatchObject({
+      id: expect.any(Number),
+      username: "phase09_operator",
+      role: "operator",
+      status: "active",
+      phone: "138****0009",
+    });
+    expect(JSON.stringify(created.body.data)).not.toContain("empty_phase_01");
+    expect(JSON.stringify(created.body.data)).not.toContain("passwordHash");
+
+    const login = await request(httpServer)
+      .post("/api/admin/login")
+      .send({ username: "phase09_operator", password: "mock" })
+      .expect(201);
+    expect(login.body.data.roles).toEqual(["operator"]);
+  });
 });

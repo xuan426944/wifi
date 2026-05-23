@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import {
+  AdminUserEntity,
   MerchantEntity,
   MerchantApplicationEntity,
   MerchantApplicationLogEntity,
@@ -61,6 +62,7 @@ export interface WifiConnectLogRecord {
 @Injectable()
 export class InMemoryStore {
   private userSeq = 5;
+  private adminUserSeq = 7;
   private merchantSeq = 4;
   private storeSeq = 1;
   private wifiSeq = 1;
@@ -83,6 +85,79 @@ export class InMemoryStore {
     { id: 3, openid: "mock_merchant_pending", userType: "merchant_owner", status: "active" },
     { id: 4, openid: "mock_merchant_disabled", userType: "merchant_owner", status: "active" },
     { id: 5, openid: "mock_merchant_risk_frozen", userType: "merchant_owner", status: "active" },
+  ];
+
+  readonly adminUsers: AdminUserEntity[] = [
+    {
+      id: 1,
+      username: "admin",
+      passwordHash: "mock-admin-password-hash",
+      realName: "Mock Super Admin",
+      role: "super_admin",
+      status: "active",
+      createdAt: new Date(0).toISOString(),
+      updatedAt: new Date(0).toISOString(),
+    },
+    {
+      id: 2,
+      username: "operator",
+      passwordHash: "mock-admin-password-hash",
+      realName: "Mock Operator",
+      role: "operator",
+      status: "active",
+      createdAt: new Date(0).toISOString(),
+      updatedAt: new Date(0).toISOString(),
+    },
+    {
+      id: 3,
+      username: "finance",
+      passwordHash: "mock-admin-password-hash",
+      realName: "Mock Finance",
+      role: "finance",
+      status: "active",
+      createdAt: new Date(0).toISOString(),
+      updatedAt: new Date(0).toISOString(),
+    },
+    {
+      id: 4,
+      username: "risk",
+      passwordHash: "mock-admin-password-hash",
+      realName: "Mock Risk",
+      role: "risk",
+      status: "active",
+      createdAt: new Date(0).toISOString(),
+      updatedAt: new Date(0).toISOString(),
+    },
+    {
+      id: 5,
+      username: "customer_service",
+      passwordHash: "mock-admin-password-hash",
+      realName: "Mock Customer Service",
+      role: "customer_service",
+      status: "active",
+      createdAt: new Date(0).toISOString(),
+      updatedAt: new Date(0).toISOString(),
+    },
+    {
+      id: 6,
+      username: "readonly_audit",
+      passwordHash: "mock-admin-password-hash",
+      realName: "Mock Readonly Audit",
+      role: "readonly_audit",
+      status: "active",
+      createdAt: new Date(0).toISOString(),
+      updatedAt: new Date(0).toISOString(),
+    },
+    {
+      id: 7,
+      username: "disabled_admin",
+      passwordHash: "mock-admin-password-hash",
+      realName: "Mock Disabled Admin",
+      role: "readonly_audit",
+      status: "disabled",
+      createdAt: new Date(0).toISOString(),
+      updatedAt: new Date(0).toISOString(),
+    },
   ];
 
   readonly merchants: MerchantEntity[] = [
@@ -304,6 +379,11 @@ export class InMemoryStore {
   nextUserId() {
     this.userSeq += 1;
     return this.userSeq;
+  }
+
+  nextAdminUserId() {
+    this.adminUserSeq += 1;
+    return this.adminUserSeq;
   }
 
   nextMerchantId() {
