@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>扫码WiFi平台 V3.4 原型</title>
+<style>body{font-family:Arial,"Microsoft YaHei",sans-serif;background:#f6f7f9;margin:0;color:#222}.wrap{display:grid;grid-template-columns:360px 1fr;gap:24px;padding:24px}.phone{width:320px;height:640px;background:#fff;border:12px solid #222;border-radius:36px;padding:22px;position:relative;box-shadow:0 10px 30px #0002}.btn{background:#1677ff;color:#fff;border-radius:12px;padding:14px;text-align:center;margin:16px 0;font-weight:bold}.card{background:#fff;border-radius:16px;padding:18px;margin-bottom:16px;box-shadow:0 4px 16px #0001}.float{position:absolute;right:20px;bottom:28px;background:#111;color:#fff;border-radius:22px;padding:10px 14px;font-size:13px}.muted{color:#777;font-size:13px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.metric{background:#f2f4f7;border-radius:12px;padding:12px;text-align:center}.admin{background:#fff;border-radius:16px;padding:20px;box-shadow:0 4px 18px #0001}.nav span{display:inline-block;background:#eef2ff;margin:4px;padding:8px 10px;border-radius:10px;font-size:13px}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border-bottom:1px solid #eee;padding:10px;text-align:left;font-size:13px}.tag{padding:3px 7px;border-radius:8px;background:#e8f7ee;color:#237a3b}.danger{background:#fff1f0;color:#c00}</style></head>
+<body><div class="wrap">
+<div>
+ <div class="phone">
+  <h2>XX 咖啡</h2><p class="muted">WiFi：Cafe_WiFi</p><div class="btn">一键连接 WiFi</div><p class="muted">观看广告后获取 WiFi 连接授权。</p><div class="card"><b>连接提示</b><p class="muted">连接失败时可复制密码手动连接。</p></div><div class="float">商家申请</div>
+ </div>
+ <div class="phone" style="margin-top:24px">
+  <h2>商家中心</h2><div class="card"><div>今日预估收益</div><h1>¥ 12.80</h1><p class="muted">预估收益不等于可提现收益</p></div><div class="grid"><div class="metric">扫码<br><b>120</b></div><div class="metric">广告<br><b>80</b></div><div class="metric">连接<br><b>72</b></div></div><div class="btn">申请提现</div><p>[收益明细] [排行榜] [门店二维码]</p>
+ </div>
+</div>
+<div class="admin"><h1>PC 后台原型</h1><div class="nav"><span>商户申请审核</span><span>商户管理</span><span>门店管理</span><span>WiFi管理</span><span>分成配置</span><span>提现管理</span><span>财务对账</span><span>风控中心</span></div>
+<h2>商户申请审核</h2><button>通过并创建商户</button> <button>驳回</button><table><tr><th>申请人</th><th>门店</th><th>城市</th><th>WiFi</th><th>状态</th><th>操作</th></tr><tr><td>张三</td><td>XX咖啡</td><td>台北</td><td>Cafe_WiFi</td><td><span class="tag">待审核</span></td><td>查看 / 通过 / 驳回</td></tr></table>
+<h2>WiFi 管理</h2><table><tr><th>门店</th><th>SSID</th><th>模式</th><th>手动兜底</th><th>状态</th></tr><tr><td>XX咖啡</td><td>Cafe_WiFi</td><td>wechat</td><td>开启</td><td><span class="tag">启用</span></td></tr></table>
+<h2>配置状态</h2><p><span class="tag">Mock模式可运行</span> <span class="danger">微信支付未配置</span> <span class="danger">广告位未配置</span></p>
+</div></div></body></html>

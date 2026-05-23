@@ -1,0 +1,302 @@
+# 配置项完整字典 V3.4
+configs:
+  system.platform_name:
+    name: 平台名称
+    type: string
+    default: 门店扫码WiFi广告平台
+    editable_in_admin: true
+    sensitive: false
+    required_for_production: true
+    restart_required: false
+    module: system
+  system.logo_url:
+    name: 平台 Logo
+    type: string
+    default: ""
+    editable_in_admin: true
+    sensitive: false
+    required_for_production: false
+    restart_required: false
+    module: system
+  system.customer_service_phone:
+    name: 客服电话
+    type: string
+    default: ""
+    editable_in_admin: true
+    sensitive: false
+    required_for_production: false
+    restart_required: false
+    module: system
+  agreement.user_agreement_url:
+    name: 用户协议链接
+    type: url
+    default: ""
+    editable_in_admin: true
+    sensitive: false
+    required_for_production: true
+    module: compliance
+  agreement.privacy_policy_url:
+    name: 隐私政策链接
+    type: url
+    default: ""
+    editable_in_admin: true
+    sensitive: false
+    required_for_production: true
+    module: compliance
+  agreement.merchant_agreement_url:
+    name: 商户协议链接
+    type: url
+    default: ""
+    editable_in_admin: true
+    sensitive: false
+    required_for_production: true
+    module: compliance
+  app.auth_mode:
+    name: 登录模式
+    type: enum
+    options: [mock_wechat, wechat]
+    default: mock_wechat
+    editable_in_admin: false
+    env_key: AUTH_MODE
+    sensitive: false
+    required_for_production: true
+    module: auth
+  wechat.app_id:
+    name: 微信小程序 AppID
+    type: string
+    default: ""
+    editable_in_admin: false
+    env_key: WECHAT_APP_ID
+    sensitive: true
+    required_for_production: true
+    module: wechat
+  wechat.app_secret:
+    name: 微信小程序 AppSecret
+    type: secret
+    default: ""
+    editable_in_admin: false
+    env_key: WECHAT_APP_SECRET
+    sensitive: true
+    required_for_production: true
+    module: wechat
+  ad.mode:
+    name: 广告模式
+    type: enum
+    options: [mock, wechat, self, cpa, cps]
+    default: mock
+    editable_in_admin: true
+    env_key: AD_MODE
+    sensitive: false
+    required_for_production: true
+    module: ad
+  ad.wechat_reward_ad_unit_id:
+    name: 微信激励广告位 ID
+    type: string
+    default: "mock-reward-ad-unit"
+    editable_in_admin: true
+    sensitive: false
+    required_for_production: false
+    module: ad
+  wifi.mode:
+    name: WiFi 连接模式
+    type: enum
+    options: [mock, wechat, manual]
+    default: mock
+    editable_in_admin: true
+    env_key: WIFI_MODE
+    sensitive: false
+    required_for_production: true
+    module: wifi
+  wifi.require_ad_before_connect:
+    name: 连接前是否必须看广告
+    type: boolean
+    default: true
+    editable_in_admin: true
+    sensitive: false
+    module: wifi
+  wifi.reward_token_ttl_seconds:
+    name: reward_token 有效秒数
+    type: integer
+    default: 300
+    editable_in_admin: true
+    module: wifi
+  wifi.show_manual_fallback:
+    name: 失败后显示手动连接
+    type: boolean
+    default: true
+    editable_in_admin: true
+    module: wifi
+  wifi.allow_copy_password:
+    name: 是否允许复制密码
+    type: boolean
+    default: true
+    editable_in_admin: true
+    module: wifi
+  commission.default_merchant_share_rate_bps:
+    name: 默认商户分成比例 bps
+    type: integer
+    default: 5000
+    editable_in_admin: true
+    required_for_production: true
+    module: commission
+  commission.allow_high_share_rate:
+    name: 是否允许商户比例超过 80%
+    type: boolean
+    default: false
+    editable_in_admin: true
+    module: commission
+  withdraw.enabled:
+    name: 是否开启提现
+    type: boolean
+    default: true
+    editable_in_admin: true
+    module: withdraw
+  withdraw.min_amount_cent:
+    name: 最低提现金额分
+    type: integer
+    default: 5000
+    editable_in_admin: true
+    module: withdraw
+  withdraw.single_auto_limit_cent:
+    name: 单笔自动提现上限分
+    type: integer
+    default: 30000
+    editable_in_admin: true
+    module: withdraw
+  withdraw.daily_auto_limit_cent:
+    name: 单日自动提现上限分
+    type: integer
+    default: 50000
+    editable_in_admin: true
+    module: withdraw
+  withdraw.monthly_limit_cent:
+    name: 单月提现上限分
+    type: integer
+    default: 500000
+    editable_in_admin: true
+    module: withdraw
+  withdraw.new_merchant_protection_days:
+    name: 新商户保护期天数
+    type: integer
+    default: 7
+    editable_in_admin: true
+    module: withdraw
+  withdraw.min_effective_ad_complete_count:
+    name: 提现最低有效广告完成量
+    type: integer
+    default: 100
+    editable_in_admin: true
+    module: withdraw
+  transfer.mode:
+    name: 转账模式
+    type: enum
+    options: [mock, wechat]
+    default: mock
+    editable_in_admin: false
+    env_key: TRANSFER_MODE
+    module: withdraw
+  wechat_pay.mch_id:
+    name: 微信支付商户号
+    type: string
+    default: ""
+    editable_in_admin: false
+    env_key: WECHAT_PAY_MCH_ID
+    sensitive: true
+    required_for_production: true
+    module: payment
+  wechat_pay.api_v3_key:
+    name: 微信支付 API v3 密钥
+    type: secret
+    default: ""
+    editable_in_admin: false
+    env_key: WECHAT_PAY_API_V3_KEY
+    sensitive: true
+    required_for_production: true
+    module: payment
+  ranking.enabled:
+    name: 是否开启排行榜
+    type: boolean
+    default: true
+    editable_in_admin: true
+    module: ranking
+  ranking.amount_display_mode:
+    name: 收益展示模式
+    type: enum
+    options: [exact, range, heat, hidden]
+    default: range
+    editable_in_admin: true
+    module: ranking
+  ranking.refresh_minutes:
+    name: 排行榜刷新分钟数
+    type: integer
+    default: 10
+    editable_in_admin: true
+    module: ranking
+  ranking.hide_risk_stores:
+    name: 是否隐藏风控门店
+    type: boolean
+    default: true
+    editable_in_admin: true
+    module: ranking
+  risk.same_openid_same_store_daily_limit:
+    name: 同 openid 同门店每日有效收益次数
+    type: integer
+    default: 1
+    editable_in_admin: true
+    module: risk
+  risk.same_openid_global_daily_limit:
+    name: 同 openid 全平台每日有效收益次数
+    type: integer
+    default: 3
+    editable_in_admin: true
+    module: risk
+  risk.ip_ad_complete_threshold:
+    name: 同 IP 广告完成阈值
+    type: integer
+    default: 50
+    editable_in_admin: true
+    module: risk
+  risk.connect_fail_rate_threshold:
+    name: 连接失败率阈值
+    type: decimal
+    default: 0.8
+    editable_in_admin: true
+    module: risk
+
+
+# V3.4 merchant application configs
+merchantApplicationEnabled:
+  name: 商户自助申请开关
+  type: boolean
+  default: true
+  module: merchant_application
+  editableInAdmin: true
+  requireRestart: false
+merchantApplicationRequirePhone:
+  name: 商户申请是否必须手机号
+  type: boolean
+  default: true
+  module: merchant_application
+  editableInAdmin: true
+  requireRestart: false
+merchantApplicationWifiOptional:
+  name: 商户申请 WiFi 是否选填
+  type: boolean
+  default: true
+  module: merchant_application
+  editableInAdmin: true
+  requireRestart: false
+merchantApplicationAutoCreateWifi:
+  name: 审核通过后是否自动创建申请中填写的 WiFi
+  type: boolean
+  default: true
+  module: merchant_application
+  editableInAdmin: true
+  requireRestart: false
+financeReconciliationEnabled:
+  name: 财务对账任务开关
+  type: boolean
+  default: true
+  module: finance
+  editableInAdmin: true
+  requireRestart: false

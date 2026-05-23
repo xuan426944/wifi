@@ -1,0 +1,543 @@
+openapi: 3.0.3
+info:
+  title: 门店扫码 WiFi 广告收益平台 API V3.4
+  version: 3.2.0
+servers:
+  - url: /api
+security:
+  - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    Page:
+      name: page
+      in: query
+      schema: { type: integer, default: 1 }
+    PageSize:
+      name: pageSize
+      in: query
+      schema: { type: integer, default: 20, maximum: 100 }
+  schemas:
+    ApiResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: integer, example: 0 }
+        message: { type: string, example: ok }
+        data: { type: object }
+    PageResult:
+      type: object
+      properties:
+        list: { type: array, items: { type: object } }
+        total: { type: integer }
+        page: { type: integer }
+        pageSize: { type: integer }
+    RoleContext:
+      type: object
+      properties:
+        openid: { type: string }
+        isMerchantOwner: { type: boolean }
+        merchantStatus: { type: string, enum: [none,pending,active,disabled,risk_frozen] }
+        merchantId: { type: integer, nullable: true }
+        storeCount: { type: integer }
+        defaultLanding: { type: string, enum: [wifi,merchant_dashboard] }
+        canViewMerchantPages: { type: boolean }
+        canWithdraw: { type: boolean }
+    Merchant:
+      type: object
+      properties:
+        id: { type: integer }
+        merchantNo: { type: string }
+        name: { type: string }
+        ownerName: { type: string }
+        ownerPhone: { type: string }
+        city: { type: string }
+        industry: { type: string }
+        shareRateBps: { type: integer, nullable: true }
+        status: { type: string }
+        riskStatus: { type: string }
+    Store:
+      type: object
+      properties:
+        id: { type: integer }
+        merchantId: { type: integer }
+        storeNo: { type: string }
+        name: { type: string }
+        city: { type: string }
+        address: { type: string }
+        shareRateBps: { type: integer, nullable: true }
+        status: { type: string }
+    WifiConfig:
+      type: object
+      properties:
+        id: { type: integer }
+        storeId: { type: integer }
+        ssid: { type: string }
+        passwordMasked: { type: string }
+        securityType: { type: string, enum: [none,WEP,WPA,WPA2,WPA3] }
+        connectMode: { type: string, enum: [mock,wechat,manual] }
+        isEnabled: { type: boolean }
+        allowCopyPassword: { type: boolean }
+        showManualFallback: { type: boolean }
+        passwordViewPolicy: { type: string, enum: [never_plain,copy_only,second_confirm_plain] }
+    Error:
+      type: object
+      properties:
+        code: { type: integer }
+        message: { type: string }
+        traceId: { type: string }
+paths:
+  /auth/wx-login:
+    post:
+      summary: 小程序登录并返回角色上下文
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code: { type: string }
+                mockOpenid: { type: string, description: mock 模式可传 }
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          token: { type: string }
+                          roleContext: { $ref: '#/components/schemas/RoleContext' }
+  /store/landing:
+    get:
+      summary: 普通客户扫码 WiFi 落地页
+      parameters:
+        - name: scene
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: 返回门店名、WiFi 名、是否需要广告、是否配置 WiFi }
+  /scan/report:
+    post:
+      summary: 上报扫码
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [storeId]
+              properties:
+                storeId: { type: integer }
+                scene: { type: string }
+      responses: { '200': { description: ok } }
+  /ad/view/start:
+    post:
+      summary: 创建广告观看记录
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [storeId]
+              properties:
+                storeId: { type: integer }
+      responses: { '200': { description: 返回 viewNo、adMode、adUnitId、mockAdPayload } }
+  /ad/view/finish:
+    post:
+      summary: 上报广告完成
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [viewNo, isEnded]
+              properties:
+                viewNo: { type: string }
+                isEnded: { type: boolean }
+                closeReason: { type: string }
+      responses: { '200': { description: 返回 isEffective、rewardToken 可选 } }
+  /wifi/reward-token:
+    post:
+      summary: 获取 WiFi 授权 token
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [storeId, viewNo]
+              properties:
+                storeId: { type: integer }
+                viewNo: { type: string }
+      responses: { '200': { description: 返回 rewardToken、expiresAt } }
+  /wifi/connect-info:
+    post:
+      summary: 凭 reward_token 获取 WiFi 连接信息
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rewardToken]
+              properties:
+                rewardToken: { type: string }
+      responses: { '200': { description: 返回 ssid、password、securityType、manualFallback } }
+  /wifi/connect-result:
+    post:
+      summary: 上报 WiFi 连接结果
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [storeId, status]
+              properties:
+                storeId: { type: integer }
+                rewardToken: { type: string }
+                status: { type: string, enum: [success,failed,manual,missing_wifi] }
+                failReason: { type: string }
+      responses: { '200': { description: ok } }
+  /merchant/dashboard:
+    get:
+      summary: 商户看板，仅授权商户可访问
+      responses: { '200': { description: 今日预估、昨日确认、本月、累计、可提现、提现中、冻结、扫码、广告完成、连接成功、排行 } }
+  /merchant/revenue:
+    get:
+      summary: 商户收益明细
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - name: status
+          in: query
+          schema: { type: string }
+      responses: { '200': { description: 分页收益明细 } }
+  /merchant/withdraw/apply:
+    post:
+      summary: 商户申请提现
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amountCent]
+              properties:
+                amountCent: { type: integer }
+      responses: { '200': { description: 返回 withdrawNo、status } }
+  /merchant/withdraws:
+    get:
+      summary: 商户提现记录
+      parameters: [ { $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' } ]
+      responses: { '200': { description: 分页提现记录 } }
+  /ranking/store:
+    get:
+      summary: 商户端排行榜
+      parameters:
+        - name: type
+          in: query
+          schema: { type: string, enum: [today_revenue,yesterday_revenue,month_revenue,total_revenue,scan_count,ad_complete_count,connect_success_count,city_revenue,industry_revenue] }
+      responses: { '200': { description: 排行榜列表，按后台配置返回 exact/range/heat/hidden 显示 } }
+  /admin/login:
+    post:
+      summary: 后台登录
+      security: []
+      responses: { '200': { description: token 和权限列表 } }
+  /admin/dashboard:
+    get:
+      summary: 后台总览
+      responses: { '200': { description: 核心指标 } }
+  /admin/merchants:
+    get:
+      summary: 商户列表
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - { name: keyword, in: query, schema: { type: string } }
+        - { name: status, in: query, schema: { type: string } }
+        - { name: riskStatus, in: query, schema: { type: string } }
+      responses: { '200': { description: 分页商户 } }
+    post:
+      summary: 新增商户
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+                ownerName: { type: string }
+                ownerPhone: { type: string }
+                city: { type: string }
+                industry: { type: string }
+                shareRateBps: { type: integer, nullable: true }
+      responses: { '200': { description: created } }
+  /admin/merchants/{id}:
+    get:
+      summary: 商户详情
+      parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ]
+      responses: { '200': { description: 商户详情、老板、门店、钱包摘要 } }
+    put:
+      summary: 编辑商户资料
+      parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ]
+      responses: { '200': { description: ok } }
+  /admin/merchants/{id}/audit:
+    post:
+      summary: 审核商户
+      parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ]
+      responses: { '200': { description: ok } }
+  /admin/merchants/{id}/disable:
+    post:
+      summary: 禁用商户
+      parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ]
+      responses: { '200': { description: ok } }
+  /admin/merchants/{id}/bind-owner:
+    post:
+      summary: 绑定商户老板 openid
+      parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [openid]
+              properties:
+                openid: { type: string }
+                bindMethod: { type: string, enum: [admin,invite_code,merchant_qrcode] }
+      responses: { '200': { description: ok } }
+  /admin/merchants/{id}/share-rate:
+    post:
+      summary: 修改商户分成比例
+      parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [shareRateBps, reason, confirm]
+              properties:
+                shareRateBps: { type: integer, minimum: 0, maximum: 10000 }
+                reason: { type: string }
+                confirm: { type: boolean }
+      responses: { '200': { description: ok } }
+  /admin/stores:
+    get: { summary: 门店列表, responses: { '200': { description: page } } }
+    post: { summary: 新增门店, responses: { '200': { description: created } } }
+  /admin/stores/{id}:
+    get: { summary: 门店详情, parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ], responses: { '200': { description: ok } } }
+    put: { summary: 编辑门店, parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ], responses: { '200': { description: ok } } }
+  /admin/stores/{id}/share-rate:
+    post:
+      summary: 修改门店分成比例
+      parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ]
+      responses: { '200': { description: ok } }
+  /admin/wifi:
+    get: { summary: WiFi 配置列表, responses: { '200': { description: page } } }
+  /admin/wifi/save:
+    post:
+      summary: 新增或编辑 WiFi 配置
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [storeId, ssid, securityType, connectMode]
+              properties:
+                id: { type: integer, nullable: true }
+                storeId: { type: integer }
+                ssid: { type: string }
+                password: { type: string, description: 编辑时可为空表示不修改 }
+                securityType: { type: string, enum: [none,WEP,WPA,WPA2,WPA3] }
+                connectMode: { type: string, enum: [mock,wechat,manual] }
+                isPrimary: { type: boolean }
+                isEnabled: { type: boolean }
+                allowCopyPassword: { type: boolean }
+                showManualFallback: { type: boolean }
+                passwordViewPolicy: { type: string, enum: [never_plain,copy_only,second_confirm_plain] }
+                remark: { type: string }
+      responses: { '200': { description: ok } }
+  /admin/wifi/{id}/disable:
+    post: { summary: 禁用 WiFi, parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ], responses: { '200': { description: ok } } }
+  /admin/qrcode/generate:
+    post: { summary: 生成门店二维码, responses: { '200': { description: qrcodeUrl } } }
+  /admin/ads:
+    get: { summary: 广告列表, responses: { '200': { description: page } } }
+    post: { summary: 新增广告, responses: { '200': { description: created } } }
+  /admin/ads/{id}/audit:
+    post: { summary: 广告审核, parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ], responses: { '200': { description: ok } } }
+  /admin/campaigns:
+    get: { summary: 广告投放列表, responses: { '200': { description: page } } }
+    post: { summary: 新增广告投放, responses: { '200': { description: created } } }
+  /admin/revenue:
+    get: { summary: 收益记录列表, responses: { '200': { description: page } } }
+  /admin/settlement/import:
+    post: { summary: 导入结算数据, responses: { '200': { description: batch result } } }
+  /admin/wallets:
+    get: { summary: 钱包列表, responses: { '200': { description: page } } }
+  /admin/wallets/{merchantId}/ledger:
+    get: { summary: 钱包流水, parameters: [ { name: merchantId, in: path, required: true, schema: { type: integer } } ], responses: { '200': { description: page } } }
+  /admin/wallets/adjust:
+    post: { summary: 人工调账, responses: { '200': { description: ok } } }
+  /admin/withdraws:
+    get: { summary: 提现列表, responses: { '200': { description: page } } }
+  /admin/withdraws/{id}/review:
+    post: { summary: 提现进入审核/审核备注, parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ], responses: { '200': { description: ok } } }
+  /admin/withdraws/{id}/approve:
+    post: { summary: 提现审核通过并发起转账, parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ], responses: { '200': { description: ok } } }
+  /admin/withdraws/{id}/reject:
+    post: { summary: 提现审核拒绝并解冻, parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ], responses: { '200': { description: ok } } }
+  /admin/withdraws/{id}/query-transfer:
+    post: { summary: 提现查单, parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ], responses: { '200': { description: remote status } } }
+  /admin/ranking/config:
+    get: { summary: 排行榜配置, responses: { '200': { description: config } } }
+    post: { summary: 保存排行榜配置, responses: { '200': { description: ok } } }
+  /admin/risk/events:
+    get: { summary: 风控事件列表, responses: { '200': { description: page } } }
+  /admin/risk/events/{id}/handle:
+    post: { summary: 处理风控事件, parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ], responses: { '200': { description: ok } } }
+  /admin/system/config:
+    get: { summary: 系统配置列表, responses: { '200': { description: configs } } }
+    post: { summary: 保存系统配置, responses: { '200': { description: ok } } }
+  /admin/integrations/status:
+    get: { summary: 第三方配置状态检查, responses: { '200': { description: 微信、支付、广告、WiFi、存储配置状态 } } }
+  /admin/operation-logs:
+    get: { summary: 操作日志, responses: { '200': { description: page } } }
+  /admin/admin-users:
+    get: { summary: 后台账号列表, responses: { '200': { description: page } } }
+    post: { summary: 新增后台账号, responses: { '200': { description: created } } }
+  /admin/roles:
+    get: { summary: 角色列表, responses: { '200': { description: list } } }
+  /payment/wechat/transfer-notify:
+    post:
+      summary: 微信商家转账回调，mock/wechat 共用入口
+      security: []
+      responses: { '200': { description: success } }
+
+
+# V3.4 商户自助入驻 API
+paths:
+  /api/merchant/applications:
+    post:
+      summary: 普通用户提交商户入驻申请
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [applicantName, applicantPhone, storeName, city, address, industry, agreeMerchantTerms]
+              properties:
+                sourceStoreId: { type: integer, nullable: true }
+                applicantName: { type: string }
+                applicantPhone: { type: string }
+                storeName: { type: string }
+                city: { type: string }
+                district: { type: string }
+                address: { type: string }
+                industry: { type: string }
+                wifiSsid: { type: string, nullable: true }
+                wifiPassword: { type: string, nullable: true }
+                remark: { type: string, nullable: true }
+                agreeMerchantTerms: { type: boolean }
+      responses:
+        '200':
+          description: 创建成功
+          content:
+            application/json:
+              example: { code: 0, data: { applicationNo: 'MA202605230001', status: 'submitted' } }
+  /api/merchant/applications/my/latest:
+    get:
+      summary: 查询当前 openid 最新商户申请或商户绑定状态
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              example: { code: 0, data: { hasActiveMerchant: false, latestApplicationStatus: 'submitted' } }
+  /api/merchant/applications/{applicationNo}/cancel:
+    post:
+      summary: 用户取消未审核的商户申请
+      parameters:
+        - in: path
+          name: applicationNo
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: ok }
+  /admin/merchant-applications:
+    get:
+      summary: 后台商户申请列表
+      parameters:
+        - in: query
+          name: status
+          schema: { type: string }
+        - in: query
+          name: keyword
+          schema: { type: string }
+      responses:
+        '200': { description: ok }
+  /admin/merchant-applications/{applicationNo}:
+    get:
+      summary: 后台商户申请详情
+      parameters:
+        - in: path
+          name: applicationNo
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: ok }
+  /admin/merchant-applications/{applicationNo}/approve:
+    post:
+      summary: 审核通过并自动创建商户门店绑定关系
+      parameters:
+        - in: path
+          name: applicationNo
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                createMerchant: { type: boolean, default: true }
+                createStore: { type: boolean, default: true }
+                bindOwner: { type: boolean, default: true }
+                createWifiIfProvided: { type: boolean, default: true }
+                merchantShareRateBps: { type: integer, nullable: true }
+                storeShareRateBps: { type: integer, nullable: true }
+                reviewRemark: { type: string }
+      responses:
+        '200': { description: ok }
+  /admin/merchant-applications/{applicationNo}/reject:
+    post:
+      summary: 驳回商户申请
+      parameters:
+        - in: path
+          name: applicationNo
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rejectReason]
+              properties:
+                rejectReason: { type: string }
+                allowResubmit: { type: boolean, default: true }
+      responses:
+        '200': { description: ok }
