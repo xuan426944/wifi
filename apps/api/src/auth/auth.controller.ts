@@ -1,4 +1,4 @@
-import { Body, Controller, Inject, Post } from "@nestjs/common";
+import { Body, Controller, Get, Inject, Post, Req } from "@nestjs/common";
 import { ok } from "../common/api-response";
 import { PublicRoute } from "../rbac/decorators";
 import { AdminLoginRequest, WxLoginRequest } from "./auth.dto";
@@ -16,7 +16,12 @@ export class AuthController {
 
   @PublicRoute()
   @Post("admin/login")
-  adminLogin(@Body() _body: AdminLoginRequest) {
-    return ok(this.authService.adminLogin());
+  adminLogin(@Body() body: AdminLoginRequest) {
+    return ok(this.authService.adminLogin(body));
+  }
+
+  @Get("auth/me")
+  me(@Req() request: any) {
+    return ok(this.authService.currentRoutePolicy(request.principal.openid));
   }
 }

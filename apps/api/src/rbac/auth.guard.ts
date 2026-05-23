@@ -20,6 +20,10 @@ export class AuthGuard implements CanActivate {
     const auth = String(request.headers.authorization ?? "");
     const token = auth.startsWith("Bearer ") ? auth.slice(7) : undefined;
     if (token?.startsWith("admin.mock.")) {
+      const requestPath = String(request.originalUrl ?? request.url ?? request.path ?? "");
+      if (!requestPath.startsWith("/api/admin")) {
+        throw new ApiException(ERROR_CODES.UNAUTHORIZED, "未登录", HttpStatus.UNAUTHORIZED);
+      }
       request.adminAuthenticated = true;
       request.adminRoleFromToken = token.slice("admin.mock.".length);
       return true;

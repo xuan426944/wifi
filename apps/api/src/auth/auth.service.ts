@@ -1,4 +1,5 @@
-import { Inject, Injectable } from "@nestjs/common";
+import { HttpStatus, Inject, Injectable } from "@nestjs/common";
+import { ApiException, ERROR_CODES } from "../common/errors";
 import {
   MERCHANT_REPOSITORY,
   MerchantRepository,
@@ -8,7 +9,9 @@ import {
   UserRepository,
 } from "../database/repositories";
 import { AUTH_PROVIDER, AuthProvider } from "../providers/provider.interfaces";
+import { ROLE_PERMISSIONS, resolveMockAdminRole } from "../rbac/permissions";
 import { encodeMockToken, Principal, RoleContext } from "./role-context";
+import { buildRoutePolicy } from "./route-policy";
 
 @Injectable()
 export class AuthService {
@@ -27,14 +30,27 @@ export class AuthService {
     return {
       token: encodeMockToken(principal),
       roleContext,
+      routePolicy: buildRoutePolicy(roleContext),
     };
   }
 
-  adminLogin() {
+  adminLogin(input: { username?: string; password?: string } = {}) {
+    if (input.username === "disabled_admin") {
+      throw new ApiException(ERROR_CODES.ADMIN_FORBIDDEN, "账号禁用", HttpStatus.FORBIDDEN);
+    }
+    const role = resolveMockAdminRole(input.username);
     return {
-      token: "admin.mock.super_admin",
-      permissions: ["*"],
-      roles: ["super_admin"],
+      token: `admin.mock.${role}`,
+      permissions: ROLE_PERMISSIONS[role],
+      roles: [role],
+    };
+  }
+
+  currentRoutePolicy(openid: string) {
+    const roleContext = this.buildRoleContext(openid);
+    return {
+      roleContext,
+      routePolicy: buildRoutePolicy(roleContext),
     };
   }
 
@@ -43,10 +59,10 @@ export class AuthService {
     if (!owner || owner.merchant.status !== "active") {
       return {
         openid,
-        isMerchantOwner: false,
+        isMerchantOwner: Boolean(owner),
         merchantStatus: owner?.merchant.status ?? "none",
         merchantId: owner?.merchant.id ?? null,
-        storeCount: 0,
+        storeCount: owner ? this.stores.findByMerchantId(owner.merchant.id).length : 0,
         defaultLanding: "wifi",
         canViewMerchantPages: false,
         canWithdraw: false,

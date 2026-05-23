@@ -52,3 +52,16 @@ export const hasPermission = (role: AdminRole | undefined, permission: string) =
   const permissions = ROLE_PERMISSIONS[role] ?? [];
   return permissions.includes("*") || permissions.includes(permission);
 };
+
+export const isAdminRole = (role: string): role is AdminRole =>
+  ["super_admin", "operator", "finance", "risk", "customer_service", "readonly_audit"].includes(role);
+
+export const resolveMockAdminRole = (username?: string): AdminRole => {
+  if (!username || username === "admin") {
+    return "super_admin";
+  }
+  if (isAdminRole(username)) {
+    return username;
+  }
+  return "readonly_audit";
+};

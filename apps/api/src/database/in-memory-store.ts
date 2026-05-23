@@ -26,14 +26,17 @@ export interface RewardTokenRecord {
 
 @Injectable()
 export class InMemoryStore {
-  private userSeq = 2;
-  private merchantSeq = 1;
+  private userSeq = 5;
+  private merchantSeq = 4;
   private storeSeq = 1;
   private wifiSeq = 1;
 
   readonly users: UserEntity[] = [
     { id: 1, openid: "mock_customer", userType: "customer", status: "active" },
     { id: 2, openid: "mock_merchant_active", userType: "merchant_owner", status: "active" },
+    { id: 3, openid: "mock_merchant_pending", userType: "merchant_owner", status: "active" },
+    { id: 4, openid: "mock_merchant_disabled", userType: "merchant_owner", status: "active" },
+    { id: 5, openid: "mock_merchant_risk_frozen", userType: "merchant_owner", status: "active" },
   ];
 
   readonly merchants: MerchantEntity[] = [
@@ -49,6 +52,42 @@ export class InMemoryStore {
       status: "active",
       riskStatus: "normal",
     },
+    {
+      id: 2,
+      merchantNo: "M202605230002",
+      name: "Mock 待审商户",
+      ownerName: "待审老板",
+      ownerPhone: "13800000001",
+      city: "上海",
+      industry: "餐饮",
+      shareRateBps: 5000,
+      status: "pending",
+      riskStatus: "normal",
+    },
+    {
+      id: 3,
+      merchantNo: "M202605230003",
+      name: "Mock 禁用商户",
+      ownerName: "禁用老板",
+      ownerPhone: "13800000002",
+      city: "上海",
+      industry: "餐饮",
+      shareRateBps: 5000,
+      status: "disabled",
+      riskStatus: "blocked",
+    },
+    {
+      id: 4,
+      merchantNo: "M202605230004",
+      name: "Mock 风控冻结商户",
+      ownerName: "风控老板",
+      ownerPhone: "13800000003",
+      city: "上海",
+      industry: "餐饮",
+      shareRateBps: 5000,
+      status: "risk_frozen",
+      riskStatus: "frozen",
+    },
   ];
 
   readonly merchantOwners: MerchantOwnerEntity[] = [
@@ -56,6 +95,27 @@ export class InMemoryStore {
       merchantId: 1,
       userId: 2,
       openid: "mock_merchant_active",
+      bindMethod: "admin",
+      status: "active",
+    },
+    {
+      merchantId: 2,
+      userId: 3,
+      openid: "mock_merchant_pending",
+      bindMethod: "admin",
+      status: "active",
+    },
+    {
+      merchantId: 3,
+      userId: 4,
+      openid: "mock_merchant_disabled",
+      bindMethod: "admin",
+      status: "active",
+    },
+    {
+      merchantId: 4,
+      userId: 5,
+      openid: "mock_merchant_risk_frozen",
       bindMethod: "admin",
       status: "active",
     },
@@ -95,6 +155,33 @@ export class InMemoryStore {
   readonly wallets: MerchantWalletEntity[] = [
     {
       merchantId: 1,
+      totalConfirmedCent: 0,
+      availableCent: 0,
+      frozenWithdrawCent: 0,
+      frozenRiskCent: 0,
+      totalWithdrawnCent: 0,
+      version: 0,
+    },
+    {
+      merchantId: 2,
+      totalConfirmedCent: 0,
+      availableCent: 0,
+      frozenWithdrawCent: 0,
+      frozenRiskCent: 0,
+      totalWithdrawnCent: 0,
+      version: 0,
+    },
+    {
+      merchantId: 3,
+      totalConfirmedCent: 0,
+      availableCent: 0,
+      frozenWithdrawCent: 0,
+      frozenRiskCent: 0,
+      totalWithdrawnCent: 0,
+      version: 0,
+    },
+    {
+      merchantId: 4,
       totalConfirmedCent: 0,
       availableCent: 0,
       frozenWithdrawCent: 0,

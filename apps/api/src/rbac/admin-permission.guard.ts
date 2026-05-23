@@ -20,7 +20,7 @@ export class AdminPermissionGuard implements CanActivate {
     if (!request.adminAuthenticated) {
       throw new ApiException(ERROR_CODES.ADMIN_FORBIDDEN, "无后台权限", HttpStatus.FORBIDDEN);
     }
-    const role = String(request.headers["x-admin-role"] ?? request.adminRoleFromToken ?? "") as AdminRole;
+    const role = String(request.adminRoleFromToken ?? "") as AdminRole;
     if (!hasPermission(role, permission)) {
       throw new ApiException(ERROR_CODES.ADMIN_FORBIDDEN, "无后台权限", HttpStatus.FORBIDDEN);
     }

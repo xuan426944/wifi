@@ -41,7 +41,9 @@ import {
   MockTransferProvider,
   MockWifiProvider,
 } from "./providers/mock.providers";
+import { AdminPermissionGuard } from "./rbac/admin-permission.guard";
 import { AuthGuard } from "./rbac/auth.guard";
+import { MerchantGuard } from "./rbac/merchant.guard";
 import { StoreController } from "./store/store.controller";
 import { WifiController } from "./wifi/wifi.controller";
 import { WifiService } from "./wifi/wifi.service";
@@ -66,6 +68,8 @@ import { join } from "node:path";
     WifiService,
     MigrationService,
     OperationLogService,
+    AdminPermissionGuard,
+    MerchantGuard,
     { provide: APP_CONFIG, useFactory: () => loadAppConfig() },
     { provide: MIGRATIONS_DIR, useValue: join(__dirname, "database", "migrations") },
     { provide: USER_REPOSITORY, useClass: MemoryUserRepository },
