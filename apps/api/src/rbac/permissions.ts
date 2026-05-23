@@ -9,6 +9,7 @@ export const ROLE_PERMISSIONS: Record<AdminRole, string[]> = {
     "store.create",
     "wifi.write",
     "ads.write",
+    "ranking.read",
     "ranking.write",
   ],
   finance: [
@@ -28,7 +29,9 @@ export const ROLE_PERMISSIONS: Record<AdminRole, string[]> = {
     "wallet.read",
     "withdraw.read",
     "withdraw.review",
+    "risk.read",
     "risk.handle",
+    "ranking.read",
     "ranking.write",
     "operation_log.read",
   ],

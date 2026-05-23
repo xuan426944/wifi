@@ -24,6 +24,29 @@ export type WithdrawStatus =
   | "rejected"
   | "canceled"
   | "abnormal";
+export type RankingType =
+  | "today_revenue"
+  | "yesterday_revenue"
+  | "month_revenue"
+  | "total_revenue"
+  | "scan_count"
+  | "ad_complete_count"
+  | "connect_success_count"
+  | "city_revenue"
+  | "industry_revenue";
+export type RankingAmountDisplayMode = "exact" | "range" | "heat" | "hidden";
+export type RankingVisibleScope = "global" | "city" | "industry";
+export type RiskEventType = "connect_fail_rate_high";
+export type RiskEventLevel = "low" | "medium" | "high" | "critical";
+export type RiskEventStatus = "open" | "handled" | "ignored";
+export type RiskHandleAction =
+  | "ignore"
+  | "freeze_revenue"
+  | "pause_withdraw"
+  | "disable_store"
+  | "disable_merchant"
+  | "recover"
+  | "remark";
 
 export interface UserEntity {
   id: number;
@@ -161,6 +184,49 @@ export interface WithdrawRecordEntity {
   frozenAt?: string;
   paidAt?: string;
   updatedAt: string;
+}
+
+export interface RankingConfigEntity {
+  enabled: boolean;
+  enabledTypes: RankingType[];
+  limit: number;
+  amountDisplayMode: RankingAmountDisplayMode;
+  refreshMinutes: number;
+  hideRiskStores: boolean;
+  hideNewStores: boolean;
+  newStoreDays: number;
+  minRevenueCent: number;
+  minScanCount: number;
+  visibleScope: RankingVisibleScope;
+  updatedAt: string;
+}
+
+export interface RankingSnapshotEntity {
+  id: number;
+  snapshotNo: string;
+  type: RankingType;
+  generatedAt: string;
+  itemCount: number;
+  amountDisplayMode: RankingAmountDisplayMode;
+}
+
+export interface RiskEventEntity {
+  id: number;
+  eventNo: string;
+  riskType: RiskEventType;
+  level: RiskEventLevel;
+  status: RiskEventStatus;
+  merchantId?: number;
+  storeId?: number;
+  openid?: string;
+  description: string;
+  evidence: Record<string, unknown>;
+  handledBy?: string;
+  handledAction?: RiskHandleAction;
+  handleRemark?: string;
+  createdAt: string;
+  updatedAt: string;
+  handledAt?: string;
 }
 
 export const PHASE_01_REQUIRED_TABLES = [

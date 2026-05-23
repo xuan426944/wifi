@@ -4,7 +4,10 @@ import {
   MerchantOwnerEntity,
   MerchantWalletEntity,
   QrcodeEntity,
+  RankingConfigEntity,
+  RankingSnapshotEntity,
   RevenueRecordEntity,
+  RiskEventEntity,
   StoreEntity,
   StoreWifiEntity,
   UserEntity,
@@ -65,6 +68,8 @@ export class InMemoryStore {
   private revenueSeq = 0;
   private ledgerSeq = 0;
   private withdrawSeq = 0;
+  private rankingSnapshotSeq = 0;
+  private riskEventSeq = 0;
 
   readonly users: UserEntity[] = [
     { id: 1, openid: "mock_customer", userType: "customer", status: "active" },
@@ -251,6 +256,32 @@ export class InMemoryStore {
   readonly revenueRecords: RevenueRecordEntity[] = [];
   readonly walletLedger: WalletLedgerEntity[] = [];
   readonly withdrawRecords: WithdrawRecordEntity[] = [];
+  readonly rankingSnapshots: RankingSnapshotEntity[] = [];
+  readonly riskEvents: RiskEventEntity[] = [];
+  rankingConfig: RankingConfigEntity = {
+    enabled: true,
+    enabledTypes: [
+      "today_revenue",
+      "yesterday_revenue",
+      "month_revenue",
+      "total_revenue",
+      "scan_count",
+      "ad_complete_count",
+      "connect_success_count",
+      "city_revenue",
+      "industry_revenue",
+    ],
+    limit: 20,
+    amountDisplayMode: "range",
+    refreshMinutes: 10,
+    hideRiskStores: true,
+    hideNewStores: false,
+    newStoreDays: 7,
+    minRevenueCent: 0,
+    minScanCount: 0,
+    visibleScope: "global",
+    updatedAt: new Date(0).toISOString(),
+  };
 
   findMerchantOwner(openid: string) {
     const owner = this.merchantOwners.find((item) => item.openid === openid && item.status === "active");
@@ -314,5 +345,15 @@ export class InMemoryStore {
   nextWithdrawId() {
     this.withdrawSeq += 1;
     return this.withdrawSeq;
+  }
+
+  nextRankingSnapshotId() {
+    this.rankingSnapshotSeq += 1;
+    return this.rankingSnapshotSeq;
+  }
+
+  nextRiskEventId() {
+    this.riskEventSeq += 1;
+    return this.riskEventSeq;
   }
 }

@@ -2,6 +2,7 @@ import { Body, Controller, Get, Inject, Param, Post, Put, Query, Req, UseGuards 
 import { emptyPage, ok } from "../common/api-response";
 import { ApiException, ERROR_CODES } from "../common/errors";
 import { CreateMerchantDto, CreateStoreDto, SaveWifiConfigDto, UpdateShareRateDto, UpdateStoreDto } from "../database/dtos";
+import { RankingConfigEntity } from "../database/entities";
 import { InMemoryStore } from "../database/in-memory-store";
 import {
   MERCHANT_REPOSITORY,
@@ -16,9 +17,11 @@ import {
   WifiConfigRepository,
 } from "../database/repositories";
 import { OperationLogService } from "../operation-log/operation-log.service";
+import { RankingService } from "../ranking/ranking.service";
 import { RequirePermission } from "../rbac/decorators";
 import { AdminPermissionGuard } from "../rbac/admin-permission.guard";
 import { RevenueService } from "../revenue/revenue.service";
+import { RiskService } from "../risk/risk.service";
 import { WithdrawService } from "../withdraw/withdraw.service";
 
 const WIFI_SECURITY_TYPES = ["none", "WEP", "WPA", "WPA2", "WPA3"] as const;
@@ -38,6 +41,8 @@ export class AdminController {
     @Inject(InMemoryStore) private readonly memoryStore: InMemoryStore,
     @Inject(RevenueService) private readonly revenues: RevenueService,
     @Inject(WithdrawService) private readonly withdrawsService: WithdrawService,
+    @Inject(RankingService) private readonly rankings: RankingService,
+    @Inject(RiskService) private readonly risks: RiskService,
   ) {}
 
   @Get("dashboard")
@@ -65,7 +70,7 @@ export class AdminController {
       pendingWithdrawCount: this.memoryStore.withdrawRecords.filter((record) =>
         ["frozen", "reviewing", "transfer_processing"].includes(record.status),
       ).length,
-      abnormalRiskEventCount: 0,
+      abnormalRiskEventCount: this.risks.list({ status: "open" }).length,
       activeStoreCount: this.storesRepo.list().filter((store) => store.status === "active").length,
       emptyState: true,
     });
@@ -507,27 +512,60 @@ export class AdminController {
   @Get("ranking/config")
   @RequirePermission("ranking.read")
   rankingConfig() {
-    return ok({ enabled: true, amountDisplayMode: "range", list: [] });
+    return ok(this.rankings.getConfig());
   }
 
   @Post("ranking/config")
   @RequirePermission("ranking.write")
-  saveRankingConfig(@Req() request: any) {
-    this.log(request, "ranking.config.save", "ranking_config", "global", { enabled: true });
-    return ok({ saved: true });
+  saveRankingConfig(@Req() request: any, @Body() body: Partial<RankingConfigEntity>) {
+    const config = this.rankings.saveConfig(body);
+    this.log(request, "ranking.config.save", "ranking_config", "global", {
+      enabled: config.enabled,
+      enabledTypes: config.enabledTypes,
+      amountDisplayMode: config.amountDisplayMode,
+      hideRiskStores: config.hideRiskStores,
+      visibleScope: config.visibleScope,
+    });
+    return ok({ saved: true, config });
   }
 
   @Get("risk/events")
   @RequirePermission("risk.read")
-  riskEvents() {
-    return ok(emptyPage());
+  riskEvents(
+    @Query("page") page = "1",
+    @Query("pageSize") pageSize = "20",
+    @Query("status") status?: string,
+    @Query("riskType") riskType?: string,
+    @Query("level") level?: string,
+    @Query("merchantId") merchantId?: string,
+    @Query("storeId") storeId?: string,
+    @Query("openid") openid?: string,
+  ) {
+    const list = this.risks.list({
+      status,
+      riskType,
+      level,
+      merchantId: merchantId ? Number(merchantId) : undefined,
+      storeId: storeId ? Number(storeId) : undefined,
+      openid,
+    });
+    return ok({ ...emptyPage(Number(page), Number(pageSize)), list, total: list.length });
   }
 
   @Post("risk/events/:id/handle")
   @RequirePermission("risk.handle")
-  handleRisk(@Req() request: any, @Param("id") id: string) {
-    this.log(request, "risk.handle", "risk_event", id, { status: "handled" });
-    return ok({ id: Number(id), handled: true });
+  handleRisk(
+    @Req() request: any,
+    @Param("id") id: string,
+    @Body() body: { action?: string; remark?: string; confirm?: boolean },
+  ) {
+    const result = this.risks.handle(Number(id), body, request.adminRole);
+    this.log(request, "risk.handle", "risk_event", id, {
+      action: result.handledAction,
+      status: result.status,
+      remark: body.remark,
+    });
+    return ok(result);
   }
 
   @Get("system/config")

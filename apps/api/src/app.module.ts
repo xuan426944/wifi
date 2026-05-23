@@ -46,7 +46,9 @@ import {
 import { AdminPermissionGuard } from "./rbac/admin-permission.guard";
 import { AuthGuard } from "./rbac/auth.guard";
 import { MerchantGuard } from "./rbac/merchant.guard";
+import { RankingService } from "./ranking/ranking.service";
 import { RevenueService } from "./revenue/revenue.service";
+import { RiskService } from "./risk/risk.service";
 import { StoreController } from "./store/store.controller";
 import { WifiController } from "./wifi/wifi.controller";
 import { WifiService } from "./wifi/wifi.service";
@@ -72,6 +74,8 @@ import { join } from "node:path";
     WifiService,
     RevenueService,
     WithdrawService,
+    RankingService,
+    RiskService,
     MigrationService,
     OperationLogService,
     AdminPermissionGuard,

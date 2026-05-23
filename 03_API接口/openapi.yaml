@@ -410,12 +410,43 @@ paths:
   /admin/withdraws/{id}/query-transfer:
     post: { summary: 提现查单，Mock paid 后写 withdraw_paid 流水, parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ], responses: { '200': { description: remote status } } }
   /admin/ranking/config:
-    get: { summary: 排行榜配置, responses: { '200': { description: config } } }
-    post: { summary: 保存排行榜配置, responses: { '200': { description: ok } } }
+    get: { summary: 排行榜配置, responses: { '200': { description: enabled、enabledTypes、limit、amountDisplayMode、hideRiskStores、visibleScope 等配置 } } }
+    post:
+      summary: 保存排行榜配置并写操作日志
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                enabled: { type: boolean }
+                enabledTypes: { type: array, items: { type: string } }
+                limit: { type: integer }
+                amountDisplayMode: { type: string, enum: [exact,range,heat,hidden] }
+                refreshMinutes: { type: integer }
+                hideRiskStores: { type: boolean }
+                hideNewStores: { type: boolean }
+                newStoreDays: { type: integer }
+                minRevenueCent: { type: integer }
+                minScanCount: { type: integer }
+                visibleScope: { type: string, enum: [global,city,industry] }
+      responses: { '200': { description: saved config } }
   /admin/risk/events:
-    get: { summary: 风控事件列表, responses: { '200': { description: page } } }
+    get: { summary: 风控事件列表，Mock 模式基于连接失败率生成事件, responses: { '200': { description: page } } }
   /admin/risk/events/{id}/handle:
-    post: { summary: 处理风控事件, parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ], responses: { '200': { description: ok } } }
+    post:
+      summary: 处理风控事件，高危动作必须原因和二次确认并写操作日志
+      parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action: { type: string, enum: [ignore,freeze_revenue,pause_withdraw,disable_store,disable_merchant,recover,remark] }
+                remark: { type: string }
+                confirm: { type: boolean }
+      responses: { '200': { description: handled event } }
   /admin/system/config:
     get: { summary: 系统配置列表, responses: { '200': { description: configs } } }
     post: { summary: 保存系统配置, responses: { '200': { description: ok } } }
